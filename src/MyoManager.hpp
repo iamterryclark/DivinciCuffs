@@ -17,55 +17,51 @@ struct Feature {
     int id;
     
     ofVec3f acc;
-    ofVec4f gyro;
+    ofVec3f gyro;
     
-    float roll;
-    float pitch;
-    float yaw;
+    double roll;
+    double pitch;
+    double yaw;
     
     //8 EMG Channels
-    vector<double> emg = {
-        0.0,0.0,0.0,0.0,
-        0.0,0.0,0.0,0.0
-    };
+    vector<double> emg;
 };
 
 class MyoManager {
 private:
-    
-    
+    ofxMyo::Myo myo;
+//
 public:
     MyoManager();
     ~MyoManager();
-    
     void update();
     void draw();
     void drawGui(ofVec2f pos);
-
+    
     void drawEmg(ofVec2f pos, int id);
     void drawGyro(ofVec2f pos, int id);
     void drawAccel(ofVec2f pos, int id);
     
-//    static MyoManager& get_myoInstance();
-//    static void destroy_myoInstance();
-
     void onToggleEvent(ofxDatGuiToggleEvent e);
-    
-    ofxMyo::Myo  myo;
-    
-    vector<Feature> featureVec;
-    vector<Feature> getFeatureVec();
-    vector < rapidStream<double> > emgStream;
     
     int windowSize = 25;
     bool myoActivated = false;
     
+    vector <Feature> feature;
+    
+    rapidStream<double> emgStream0 = rapidStream<double>(windowSize);
+    rapidStream<double> emgStream1 = rapidStream<double>(windowSize);
+    rapidStream<double> emgStream2 = rapidStream<double>(windowSize);
+    rapidStream<double> emgStream3 = rapidStream<double>(windowSize);
+    rapidStream<double> emgStream4 = rapidStream<double>(windowSize);
+    rapidStream<double> emgStream5 = rapidStream<double>(windowSize);
+    rapidStream<double> emgStream6 = rapidStream<double>(windowSize);
+    rapidStream<double> emgStream7 = rapidStream<double>(windowSize);
+    
     //Gui Interface
     ofxDatGui* myoGui;
     
-    ofxAssimpModelLoader model ;
+    ofxAssimpModelLoader model;
     
     ofLight light;
-
-    
 };

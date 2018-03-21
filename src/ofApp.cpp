@@ -7,7 +7,7 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     myoManager.update();
-//    interactiveML.update();
+    interactiveML.update(myoManager);
 }
 
 //--------------------------------------------------------------
@@ -17,7 +17,6 @@ void ofApp::draw(){
 }
 
 void ofApp::exit(){
-//    myoManager->destroy_myoInstance();
 }
 
 

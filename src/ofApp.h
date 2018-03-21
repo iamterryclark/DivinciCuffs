@@ -26,6 +26,6 @@ class ofApp : public ofBaseApp{
     
     //Singleton Classes
     MyoManager myoManager;
-//    MachineLearning interactiveML;
+    MachineLearning interactiveML;
     
 };

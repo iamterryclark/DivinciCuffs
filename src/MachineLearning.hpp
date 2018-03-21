@@ -20,9 +20,13 @@ public:
     MachineLearning();
     ~MachineLearning();
     
-    void update();
+    void update(MyoManager &myo);
     void draw();
     void drawGui();
     
-//    MyoManager *myoManager = &MyoManager::get_myoInstance();
+    void onButtonEvent(ofxDatGuiButtonEvent e);
+    void onToggleEvent(ofxDatGuiToggleEvent e);
+    
+    ofxDatGui * mlGui;
+
 };
