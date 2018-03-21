@@ -1,0 +1,7 @@
+ofxAssimpModelLoader
+ofxDatGui
+ofxDmx
+ofxMaxim
+ofxMyo
+ofxOsc
+ofxRapid
