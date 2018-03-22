@@ -23,6 +23,7 @@ public:
     void update(MyoManager &myo);
     void draw();
     void drawGui();
+    void calibrate( );
     
     void onButtonEvent(ofxDatGuiButtonEvent e);
     void onToggleEvent(ofxDatGuiToggleEvent e);
