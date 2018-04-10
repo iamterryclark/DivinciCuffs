@@ -4,4 +4,4 @@ ofxDmx
 ofxMaxim
 ofxMyo
 ofxOsc
-ofxRapid
+ofxRapidLib

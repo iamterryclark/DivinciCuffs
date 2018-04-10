@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxOsc.h"
+#include "OSCAbleController.hpp"
 #include "MachineLearning.hpp"
 #include "MyoManager.hpp"
 
@@ -24,8 +24,8 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
     
-    //Singleton Classes
     MyoManager myoManager;
     MachineLearning interactiveML;
+    OSCAbleController oscControl;
     
 };
