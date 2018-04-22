@@ -27,25 +27,28 @@ MachineLearning::MachineLearning()
     mlGui->addBreak()->setHeight(10.0f);
     
     mlGui->onButtonEvent(this, &MachineLearning::onButtonEvent);
-    mlGui->onToggleEvent(this, &MachineLearning::onToggleEvent);}
+    mlGui->onToggleEvent(this, &MachineLearning::onToggleEvent);
+}
+
+
 
 MachineLearning::~MachineLearning() {
     
 }
 
 void MachineLearning::update(MyoManager &myo) {
-    if(ofGetFrameNum() % 10 == 0){
-//        for (int i = 0; i < myo.)
-        vector<double> featureVector;
-        
-        for (int i = 0; i < 28; i++){
-            featureVector.push_back(myo.feature[0].emgRatioRMS[i]);
-        }
-        
-        for (int i = 0; i < 3; i++){
-            featureVector.push_back(myo.feature[0].acc[i]);
-        }
+    if(ofGetFrameNum() % 3 == 0){
+        for (int i = 0; i < myo.feature.size(); i++){
+            vector<double> featureVector;
             
+            for (int j = 0; j < 28; j++){
+                featureVector.push_back(myo.feature[i].emgRMSRatio[j]);
+            }
+            
+            for (int j = 0; j < 3; j++){
+                featureVector.push_back(myo.feature[i].acc[j]);
+            }
+        
             //
             // :: Testing / Recording Phase ::
             //
@@ -62,17 +65,17 @@ void MachineLearning::update(MyoManager &myo) {
 
 //                tempSeries.input.push_back();
 //                trainingSet.push_back(tempSeries);
-//                
+//
 //                tempSeries.input.push_back({ featureVector });
 //                tempSeries.label = ofToString(gestureNum);
-//                
+//
                 bRunGesture = false;
             }
-            
+        
             //
             // :: Training Phase ::
             //
-            
+        
             if (bTrainGestures) {
                 if(trainingEMG.size() > 0) {
                     classifierEMG.train(trainingEMG);
@@ -99,7 +102,7 @@ void MachineLearning::update(MyoManager &myo) {
 //                    cout << "Gestures Not Trained" << endl;
 //                }
             }
-            
+        
             //
             // :: Run Phase ::
             //
@@ -142,9 +145,7 @@ void MachineLearning::update(MyoManager &myo) {
                         cout << "Class: " << classLabelEMG << endl;
                         break;
                  }
-//                }
-//            }
-            
+            }
         }
     }
 }

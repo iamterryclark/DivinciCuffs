@@ -768,8 +768,8 @@
 				D38851016D0518D5AC238EFB /* MyoManager.hpp */,
 				BE4511DF4B7249B6B0F882F6 /* MachineLearning.cpp */,
 				C59BF99EE95E469251538AAC /* MachineLearning.hpp */,
-				E7FB2BA317D900255A7A4AAC /* OSCAbleController.cpp */,
 				1B48FBADE72382E2F3212D6E /* OSCAbleController.hpp */,
+				E7FB2BA317D900255A7A4AAC /* OSCAbleController.cpp */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -1187,6 +1187,7 @@
 					../../../addons/ofxRapidLib/libs/dependencies/json,
 					../../../addons/ofxRapidLib/libs/dependencies/libsvm,
 					../../../addons/ofxRapidLib/src,
+					src/xmm/src,
 				);
 				ICON = "$(ICON_NAME_DEBUG)";
 				ICON_FILE = "$(ICON_FILE_PATH)$(ICON)";
@@ -1259,6 +1260,7 @@
 					../../../addons/ofxRapidLib/libs/dependencies/json,
 					../../../addons/ofxRapidLib/libs/dependencies/libsvm,
 					../../../addons/ofxRapidLib/src,
+					src/xmm/src,
 				);
 				ICON = "$(ICON_NAME_RELEASE)";
 				ICON_FILE = "$(ICON_FILE_PATH)$(ICON)";

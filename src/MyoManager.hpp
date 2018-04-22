@@ -14,75 +14,67 @@
 #include "ofxAssimpModelLoader.h"
 
 struct Feature {
+    
+    Feature(){
+        emgRaw = vector<double>(8, 0.0);
+        std::cout << emgRaw[0];
+    }
+    
+    
     int id;
-
-    ofVec3f acc = ofVec3f(0,0,0);
-    ofVec3f accMin = numeric_limits<ofVec3f>::max();
-    ofVec3f accMax = numeric_limits<ofVec3f>::min();
     
-    ofVec3f accFOD = ofVec3f(0,0,0);
-    
-    ofVec3f gyro = ofVec3f(0,0,0);
-    ofVec3f gyroMin = numeric_limits<ofVec3f>::max();
-    ofVec3f gyroMax = numeric_limits<ofVec3f>::min();
-   
-    ofQuaternion quat = ofQuaternion(0,0,0,0);
-    ofQuaternion quatMin = numeric_limits<ofQuaternion>::max();
-    ofQuaternion quatMax = numeric_limits<ofQuaternion>::min();
-    
-    double roll = 0.0;
+    //Raw Features
     double pitch = 0.0;
     double yaw = 0.0;
+    double roll = 0.0;
+    ofVec3f acc = ofVec3f(0,0,0);
+    ofVec3f gyro = ofVec3f(0,0,0);
+    ofQuaternion quat = ofQuaternion(0,0,0,0);
     
-    //8 EMG Channels
-    array<double, 8> emgRMS = {};
-    array<double, 28> emgRatioRMS = {};
+    //Fancy Features
+    ofVec3f accFOD = ofVec3f(0,0,0);
+    vector<int> zeroCrosses;
+    vector<float> bayesFilter;
+ 
+    //Initialised in Constructor
+    vector<double> emgRaw;
+    vector<double> emgRMS;
+    vector<double> emgRMSRatio;
+    vector<double> emgBayes;
     
-    array<double, 8> emgMin = {};
-    array<double, 8> emgMax = {};
-    
+    vector<double> emgMin;
+    vector<double> emgMax;
 };
 
 class MyoManager {
 private:
     ofxMyo::Myo myo;
     bool calibrateActivate = false;
+    
 public:
     MyoManager();
     ~MyoManager();
+    
     void update();
     void draw();
-    void calibrate();
-    void drawGui(ofVec2f pos);
+//    void calibrate(Feature & feat);
     
-    void drawEmg(ofVec2f pos, int id);
-    void drawEMGRatio(ofVec2f pos, int id);
-    void drawGyro(ofVec2f pos, int id);
-    void drawAccel(ofVec2f pos, int id);
-    void drawAccelFOD(ofVec2f pos, int id);
-    void drawQuat(ofVec2f pos, int id);
+    void drawGui(ofVec2f pos);
+    void drawModel(ofVec2f pos, int id);
+    void drawGraph(ofVec2f pos, string title, vector<double> values, int min, int max);
+    void drawGraph(ofVec2f pos, string title, ofVec3f values, int min, int max);
+    void drawGraph(ofVec2f pos, string title, ofQuaternion values, int min, int max);
     
     void onToggleEvent(ofxDatGuiToggleEvent e);
     void onButtonEvent(ofxDatGuiButtonEvent e);
     void onSliderEvent(ofxDatGuiSliderEvent e);
     
-    int windowSize = 20;
-    
     vector<Feature> feature;
     
-    rapidStream<double> emgStream0{windowSize};
-    rapidStream<double> emgStream1{windowSize};
-    rapidStream<double> emgStream2{windowSize};
-    rapidStream<double> emgStream3{windowSize};
-    rapidStream<double> emgStream4{windowSize};
-    rapidStream<double> emgStream5{windowSize};
-    rapidStream<double> emgStream6{windowSize};
-    rapidStream<double> emgStream7{windowSize};
-    
-    rapidStream<double> accStream0{windowSize};
-    rapidStream<double> accStream1{windowSize};
-    rapidStream<double> accStream2{windowSize};
-    
+    vector< rapidStream<double> *> emgStreams;
+    vector< rapidStream<double> *> accStreams;
+    vector< rapidStream<double> *> accFODStreams;
+
     //Gui Interface
     ofxDatGui* myoGui;
     
@@ -92,4 +84,6 @@ public:
     
     float lowerThresh = 0;
     float higherThresh = 30;
+    
+//    ofxJSONElement savedGestures;
 };
