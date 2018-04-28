@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "OSCAbleController.hpp"
+#include "SceneOSCController.hpp"
 #include "MachineLearning.hpp"
 #include "MyoManager.hpp"
 
@@ -26,6 +26,6 @@ class ofApp : public ofBaseApp{
     
     MyoManager myoManager;
     MachineLearning interactiveML;
-    OSCAbleController oscControl;
+    SceneOSCController oscControl;
     
 };

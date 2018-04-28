@@ -5,3 +5,4 @@ ofxMaxim
 ofxMyo
 ofxOsc
 ofxRapidLib
+ofxXmlSettings

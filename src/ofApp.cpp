@@ -10,14 +10,14 @@ void ofApp::setup(){
 void ofApp::update(){
     myoManager.update();
     interactiveML.update(myoManager);
-    oscControl.update(myoManager);
+    oscControl.update(interactiveML);
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
     ofBackground(0);
     myoManager.draw();
-    oscControl.draw( ofVec2f( 100, ofGetHeight() - 200) );
+    oscControl.draw( ofVec2f( 50, ofGetHeight() - 100) );
     interactiveML.draw();
 }
 
