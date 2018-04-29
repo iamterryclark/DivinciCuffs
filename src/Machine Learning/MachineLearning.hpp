@@ -10,6 +10,7 @@
 #include "ofMain.h"
 #include "ofxRapidLib.h"
 #include "MyoManager.hpp"
+#include "ofxXmlSettings.h"
 
 class MachineLearning {
 private:
@@ -20,6 +21,9 @@ public:
     
     void update(MyoManager &myo);
     void draw();
+    void addDataToXML(vector<trainingExample> example, string addToName = "");
+    void saveDataToXML();
+    void loadDataFromXML();
 
     //Gui Events
     void onButtonEvent(ofxDatGuiButtonEvent e);
@@ -68,4 +72,8 @@ public:
     
     int sceneNum = 0;
     bool sceneActivate = false;
+    
+    ofxXmlSettings mlSettings;
+    int lastTagNumber;
+
 };

@@ -27,7 +27,7 @@ void SceneOSCController::update(MachineLearning &ml){
                     value1 = ml.mlGui->getSlider("Ableton Param 1")->getValue();
                     value2 = ml.mlGui->getSlider("Ableton Param 2")->getValue();
                     value3 = ml.mlGui->getSlider("Ableton Param 3")->getValue();
-                    value4 = ofMap((int)ml.mlGui->getSlider("Ableton Param 4")->getValue(), 0, 1, 0, 20);
+                    value4 = (int)ofMap(ml.mlGui->getSlider("Ableton Param 4")->getValue(), 0, 1, 0, 20);
                     
                     streamToInstrumentDevice("/live/device", 1, 0, 2, value1);
                     streamToInstrumentDevice("/live/device", 1, 0, 3, value2);
@@ -67,24 +67,25 @@ void SceneOSCController::update(MachineLearning &ml){
             double value1, value2, value3, value4;
 
             switch(ml.sceneNum){
-                case 1:
-                    value1 = ofMap(ml.outputVals[0], 0, 255, 0, 1);
-                    value2 = ofMap(ml.outputVals[1], 0, 255, 0, 1);
-                    value3 = ofMap(ml.outputVals[2], 0, 255, 0, 1);
-                    value4 = (int)ofMap(ml.outputVals[3], 0, 255, 0, 20);
+                case 0:
+                    value1 = ml.outputVals[0];
+                    value2 = ml.outputVals[1];
+                    value3 = ml.outputVals[2];
+                    value4 = (int)ofMap(ml.outputVals[3], 0, 1, 0, 20);
                     
                     streamToInstrumentDevice("/live/device", 1, 0, 2, value1);
                     streamToInstrumentDevice("/live/device", 1, 0, 3, value2);
-                    streamToInstrumentDevice("/live/device", 1, 0, 13, value3);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, value3);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, value4);
                     break;
-                case 2:
+                case 1:
                     value1 = ofMap(ml.outputVals[0], 0, 254, 0, 1);
                     value2 = ofMap(ml.outputVals[1], 0, 254, 0, 1);
                     
                     streamToInstrumentDevice("/live/device", 2, 1, 5, value1);
                     streamToInstrumentDevice("/live/device", 2, 1, 6, value2);
                     break;
-                case 3:
+                case 2:
                     
                     break;
                 default:

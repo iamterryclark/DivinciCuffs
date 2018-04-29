@@ -15,6 +15,8 @@ MachineLearning::MachineLearning()
     
     mlGui->setPosition(ofGetWidth() - mlGui->getWidth(),0);
     mlGui->addHeader("Machine Learning");
+    mlGui->addButton("Save All");
+    mlGui->addButton("Load Preset");
     mlGui->addMatrix("Scene", 4, true);
     mlGui->addBreak()->setHeight(10.0f);
     mlGui->addLabel(" :: Posture Recognition (KNN) :: ");
@@ -53,6 +55,54 @@ MachineLearning::~MachineLearning() {
     delete mlGui;
 }
 
+void MachineLearning::addDataToXML(vector<trainingExample> examples, string title){
+    
+    lastTagNumber    = mlSettings.addTag(title);
+
+    if( mlSettings.pushTag(title, lastTagNumber) ){
+        cout << "";
+        for (int i = 0; i < examples.size(); i++) {
+            int tagNum = mlSettings.addTag("Example");
+            cout << "TagNum : " << tagNum << endl;
+            cout << "Size " + ofToString(examples[i].input.size() )<< " Output : ";
+            for (int j = 0; j < examples[i].input.size(); j++) {
+                mlSettings.setValue("Example:input", examples[i].input[j]);
+                mlSettings.setValue("Example:label", examples[i].output[i]);
+                cout << (int)examples[i].output[i] << " | ";
+            }
+            cout << endl;
+        }
+    }
+    mlSettings.popTag();
+}
+
+void MachineLearning::saveDataToXML(){
+    mlSettings.clear();
+    if (knnTrainingEMG.size() > 0) addDataToXML(knnTrainingEMG, "knnEMG");
+    if (knnTrainingAcc.size() > 0) addDataToXML(knnTrainingAcc, "knnAcc");
+    if (nnTrainingSet.size() > 0) addDataToXML(nnTrainingSet, "nnEMG");
+    mlSettings.save("MLData.xml");
+}
+
+void MachineLearning::loadDataFromXML(){
+    knnTrainingEMG.clear();
+    knnTrainingAcc.clear();
+    nnTrainingSet.clear();
+    
+//    if( XML.loadFile("mySettings.xml") ){
+//
+//        int numTags = mlSettings.getNumTags("knnEMG:Example");
+//        if (numTags > 0){
+//            for (int i = 0;  i < numTags; i++ ){
+//                trainingExample example;
+//                for (int j = 0; j < )
+//                example.input.push_back(mlSettings.getValue("inputVal_" + ofToString(i)));
+//                knnTrainingEMG
+//            }
+//        }
+//    }
+}
+
 void MachineLearning::update(MyoManager &myo) {
     for (int i = 0; i < myo.feature.size(); i++){
         Feature feature = myo.feature[i];
@@ -62,10 +112,14 @@ void MachineLearning::update(MyoManager &myo) {
             //Collect data from the myo ready for input into the mahcine learning algorithms
             vector<double> emgFeature, accFeature;
             vector<double> emgBayesFeature;
+            vector<double> emgBayesQuat;
             
-            emgFeature = feature.emg.rawNormalised;
+            emgFeature = feature.emg.rms;
             
             emgBayesFeature = feature.emg.bayesRMS;
+            
+//            emgBayesQuat.push_back(feature.emg.bayesRMS);
+//            emgBayesQuat.push_back({feature.acc.quat});
             
             accFeature = {
                 feature.acc.quat[0],
@@ -79,17 +133,18 @@ void MachineLearning::update(MyoManager &myo) {
 
             //If we are recording a gesture
             if (bCaptureKNN){
-               
                 //Record EMG
                 trainingExample tempEMGExample;
-                tempEMGExample.input = { emgFeature };
-                tempEMGExample.output = { (double)knnGestureNum };
+                tempEMGExample.input = emgBayesFeature;
+                tempEMGExample.output = vector<double>(emgBayesFeature.size(), (double)knnGestureNum);
                 knnTrainingEMG.push_back(tempEMGExample);
                 
+                
+           
                 //Record Acc
                 trainingExample tempAccExample;
                 tempAccExample.input = { accFeature };
-                tempAccExample.output = { (double)knnGestureNum };
+                tempAccExample.output = vector<double>(accFeature.size(), (double)knnGestureNum);
                 knnTrainingAcc.push_back(tempAccExample);
                 
                 //Do not run Classifer whilst recording
@@ -98,7 +153,7 @@ void MachineLearning::update(MyoManager &myo) {
             
             if (bCaptureDTW){
                 //Record EMG
-                tempSeriesEMG.input.push_back( { emgFeature } );
+                tempSeriesEMG.input.push_back( { emgBayesFeature } );
                 tempSeriesEMG.label = ofToString(dtwGestureNum);
                 
                 //Record Acc
@@ -109,7 +164,6 @@ void MachineLearning::update(MyoManager &myo) {
             }
             
             if (bCaptureReg){
-//                cout << "Captureing Reg" << endl;
                 nnTempExample.input = { emgBayesFeature };
                 nnTempExample.output = {
                     mlGui->getSlider("Ableton Param 1")->getValue(),
@@ -164,14 +218,11 @@ void MachineLearning::update(MyoManager &myo) {
             // :: Run Phase ::
             //
             if (bRunKNN) {
-                if (myo.accNormStreams[0]->velocity() > 0.1){
-                
-                    knnClassLabelEMG = knnClassifierEMG.run({emgFeature})[0];
-                    knnClassLabelAcc = knnClassifierAcc.run({accFeature})[0];
+                knnClassLabelEMG = knnClassifierEMG.run({emgFeature})[0];
+                knnClassLabelAcc = knnClassifierAcc.run({accFeature})[0];
 
-                    if ( knnClassLabelEMG == knnClassLabelAcc){
-                        colorKNN = colors[knnClassLabelEMG];
-                    }
+                if ( knnClassLabelEMG == knnClassLabelAcc){
+                    colorKNN = colors[knnClassLabelEMG];
                 }
             }
             
@@ -207,6 +258,7 @@ void MachineLearning::draw() {
     //KNN Indicator
     ofSetColor(255);
     ofDrawBitmapString("KNN Examples EMG: " + ofToString(knnTrainingEMG.size()), 50, 350);
+
     ofDrawBitmapString("KNN Examples Acc: " + ofToString(knnTrainingAcc.size()), 50, 370);
 
     ofPushStyle();
@@ -262,7 +314,12 @@ void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
         bTrainReg = true;
     } else if (guiLabel == "DTW Train & Run") {
         bTrainDTW = true;
+    } else if (guiLabel == "Save All"){
+        saveDataToXML();
+    } else if (guiLabel == "Load Preset"){
+        loadDataFromXML();
     }
+    
 }
 
 void MachineLearning::onToggleEvent(ofxDatGuiToggleEvent e){

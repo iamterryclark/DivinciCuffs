@@ -53,7 +53,6 @@
 		ADE367465D2A8EBAD4C7A8D9 /* IpEndpointName.cpp in Sources */ = {isa = PBXBuildFile; fileRef = ADD194746185E2DA11468377 /* IpEndpointName.cpp */; };
 		ADF4E14A444FC04571F65373 /* ofxMyo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBC3B597679CEA4C0102EC16 /* ofxMyo.cpp */; };
 		AF0580829426DC6BCA135A5C /* maxiGrains.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D2FB19B70632A6F86622D94 /* maxiGrains.cpp */; };
-		B3544EF203EDDC8845FA2B4A /* DataKeeper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0E422918D36C5437470A9EE4 /* DataKeeper.cpp */; };
 		B8846EF8E504895A4A9EFEC0 /* ofxAssimpTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B6F2EE44AD04FF549AB13699 /* ofxAssimpTexture.cpp */; };
 		C060E8A96B752C3AA43836C9 /* MyoManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 474838CD780A1B5DF366E33F /* MyoManager.cpp */; };
 		C1BFCEEF1D0E6D35CFFC2554 /* searchWindow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7043A88D6AC95C7C62C03765 /* searchWindow.cpp */; };
@@ -111,7 +110,6 @@
 		0A42C807BEF3A18E8E105A3B /* ofxDatGuiTimeGraph.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxDatGuiTimeGraph.h; path = ../../../addons/ofxDatGui/src/components/ofxDatGuiTimeGraph.h; sourceTree = SOURCE_ROOT; };
 		0AED834CE4DEC5260AF302A2 /* ofxOscParameterSync.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxOscParameterSync.cpp; path = ../../../addons/ofxOsc/src/ofxOscParameterSync.cpp; sourceTree = SOURCE_ROOT; };
 		0E3FB6D73DB6B260295B6855 /* LogStream.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = LogStream.hpp; path = ../../../addons/ofxAssimpModelLoader/libs/assimp/include/assimp/LogStream.hpp; sourceTree = SOURCE_ROOT; };
-		0E422918D36C5437470A9EE4 /* DataKeeper.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = DataKeeper.cpp; path = "src/Machine Learning/DataKeeper.cpp"; sourceTree = SOURCE_ROOT; };
 		124CF6FFB720B27A63B191D1 /* dmxController.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = dmxController.hpp; path = src/Output/dmxController.hpp; sourceTree = SOURCE_ROOT; };
 		17EA08CAE874AD8E8C7B00E8 /* warpPath.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = warpPath.cpp; path = ../../../addons/ofxRapidLib/libs/warpPath.cpp; sourceTree = SOURCE_ROOT; };
 		18D6965F094E05B40B20AFB8 /* IOStream.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = IOStream.hpp; path = ../../../addons/ofxAssimpModelLoader/libs/assimp/include/assimp/IOStream.hpp; sourceTree = SOURCE_ROOT; };
@@ -252,7 +250,6 @@
 		C6CC8D0736C19ACA7949C20E /* json-forwards.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = "json-forwards.h"; path = "../../../addons/ofxRapidLib/libs/dependencies/json/json-forwards.h"; sourceTree = SOURCE_ROOT; };
 		C84ED7FCC017328C6F58283D /* ofxDatGuiColorPicker.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxDatGuiColorPicker.h; path = ../../../addons/ofxDatGui/src/components/ofxDatGuiColorPicker.h; sourceTree = SOURCE_ROOT; };
 		C954E0E8B7DB9D6983309883 /* ofxSmartFont.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = ofxSmartFont.cpp; path = ../../../addons/ofxDatGui/src/libs/ofxSmartFont/ofxSmartFont.cpp; sourceTree = SOURCE_ROOT; };
-		CCFC10C4848A820E344E1B50 /* DataKeeper.hpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = DataKeeper.hpp; path = "src/Machine Learning/DataKeeper.hpp"; sourceTree = SOURCE_ROOT; };
 		CDF7278CB636137FE7BF91A5 /* ofxDatGuiMatrix.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxDatGuiMatrix.h; path = ../../../addons/ofxDatGui/src/components/ofxDatGuiMatrix.h; sourceTree = SOURCE_ROOT; };
 		D0D6A66BEBA820EA1D396889 /* ofxDatGuiSlider.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxDatGuiSlider.h; path = ../../../addons/ofxDatGui/src/components/ofxDatGuiSlider.h; sourceTree = SOURCE_ROOT; };
 		D1B370068072AAB890CD42D2 /* pstdint.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = pstdint.h; path = ../../../addons/ofxAssimpModelLoader/libs/assimp/include/assimp/Compiler/pstdint.h; sourceTree = SOURCE_ROOT; };
@@ -473,10 +470,8 @@
 		67096A2400834941C8A73302 /* Machine Learning */ = {
 			isa = PBXGroup;
 			children = (
-				E67E22EEE22EBAD1C45DB042 /* MachineLearning.hpp */,
 				E529F12D3DA5CF851706CBF0 /* MachineLearning.cpp */,
-				0E422918D36C5437470A9EE4 /* DataKeeper.cpp */,
-				CCFC10C4848A820E344E1B50 /* DataKeeper.hpp */,
+				E67E22EEE22EBAD1C45DB042 /* MachineLearning.hpp */,
 			);
 			name = "Machine Learning";
 			sourceTree = "<group>";
@@ -581,11 +576,11 @@
 		77CCFF4895AC0D8BE20403E3 /* Output */ = {
 			isa = PBXGroup;
 			children = (
-				124CF6FFB720B27A63B191D1 /* dmxController.hpp */,
-				A51A23BAABF42112D1C41A80 /* SceneOSCController.hpp */,
-				70FA1448275A322C5FA47192 /* LightFixtureTemplates */,
 				6D122DB947DA73A176E47AFB /* SceneOSCController.cpp */,
+				A51A23BAABF42112D1C41A80 /* SceneOSCController.hpp */,
 				C3E4A0361B93D83FAC91D57B /* dmxController.cpp */,
+				124CF6FFB720B27A63B191D1 /* dmxController.hpp */,
+				70FA1448275A322C5FA47192 /* LightFixtureTemplates */,
 			);
 			name = Output;
 			sourceTree = "<group>";
@@ -774,9 +769,9 @@
 		BCDDCD40C16594B9C08407FD /* Input */ = {
 			isa = PBXGroup;
 			children = (
+				474838CD780A1B5DF366E33F /* MyoManager.cpp */,
 				343C9C5DC06D68A40063CC0D /* MyoManager.hpp */,
 				DF30B01BD50E6D0C3DE82099 /* Feature.h */,
-				474838CD780A1B5DF366E33F /* MyoManager.cpp */,
 			);
 			name = Input;
 			sourceTree = "<group>";
@@ -1021,7 +1016,6 @@
 			files = (
 				E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */,
 				E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */,
-				B3544EF203EDDC8845FA2B4A /* DataKeeper.cpp in Sources */,
 				D5CC2D7886FA1AD64B27CCFE /* MachineLearning.cpp in Sources */,
 				C060E8A96B752C3AA43836C9 /* MyoManager.cpp in Sources */,
 				83CA9CC17604A795AA1530E9 /* ProfilePlus.cp in Sources */,

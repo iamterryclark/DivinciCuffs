@@ -13,7 +13,7 @@
 #include "ofxOsc.h"
 #include "MachineLearning.hpp"
 
-#define HOST "localhost"
+#define HOST "172.20.10.10"
 #define PORTOUT 9005
 #define PORTRTN 9006
 #define TOTALSCENES 6
