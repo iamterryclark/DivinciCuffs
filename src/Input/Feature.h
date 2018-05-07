@@ -72,6 +72,8 @@ struct Accel {
     vector<int> zeroXs;
 };
 
+//Class Init here to capture all myo data into one data structure
+
 class Feature {
 public:
     

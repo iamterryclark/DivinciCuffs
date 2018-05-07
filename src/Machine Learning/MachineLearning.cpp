@@ -15,28 +15,25 @@ MachineLearning::MachineLearning()
     
     mlGui->setPosition(ofGetWidth() - mlGui->getWidth(),0);
     mlGui->addHeader("Machine Learning");
+    mlGui->addTextInput("Filename");
     mlGui->addButton("Save All");
     mlGui->addButton("Load Preset");
-    mlGui->addMatrix("Scene", 4, true);
     mlGui->addBreak()->setHeight(10.0f);
     mlGui->addLabel(" :: Posture Recognition (KNN) :: ");
     mlGui->addMatrix("KNN Record", 7, true);
     mlGui->addButton("KNN Train & Run");
     mlGui->addButton("Clear KNN");
     mlGui->addBreak()->setHeight(10.0f);
-    mlGui->addLabel(" :: Gesture Recognition (DTW) :: ");
-    mlGui->addMatrix("DTW Record", 7, true);
-    mlGui->addButton("DTW Train & Run");
-    mlGui->addButton("Clear DTW");
-//    mlGui->addBreak()->setHeight(10.0f);
-//    mlGui->addLabel(" :: Gesture Recognition (HMM) :: ");
-//    mlGui->addMatrix("HMM Record", 7, true);
-//    mlGui->addButton("HMM Train & Run");
-//    mlGui->addButton("Clear HMM");
+    mlGui->addLabel(" :: Gesture Recognition (XMM) :: ");
+    mlGui->addMatrix("XMM Record", 7, true);
+    mlGui->addButton("XMM Train & Run");
+    mlGui->addButton("Clear XMM");
     mlGui->addBreak()->setHeight(10.0f);
     mlGui->addLabel(" :: Regression (Neural Network) :: ");
     mlGui->addToggle("NN Record");
     mlGui->addButton("NN Train & Run");
+    mlGui->addButton("Stop NN");
+    mlGui->addMatrix("Scene", TOTALSCENES, true);
     mlGui->addSlider("Ableton Param 1", 0, 1);
     mlGui->addSlider("Ableton Param 2", 0, 1);
     mlGui->addSlider("Ableton Param 3", 0, 1);
@@ -49,6 +46,26 @@ MachineLearning::MachineLearning()
     mlGui->onToggleEvent(this, &MachineLearning::onToggleEvent);
     mlGui->onSliderEvent(this, &MachineLearning::onSliderEvent);
     mlGui->onMatrixEvent(this, &MachineLearning::onMatrixEvent);
+    mlGui->onTextInputEvent(this, &MachineLearning::onTextInputEvent);
+    
+    rapidmix::xmmConfig xcfg;
+    xcfg.relativeRegularization = 0.1;
+    xcfg.states = 7;
+    xcfg.likelihoodWindow = 10;
+
+    xmmClassifierEMG = rapidmix::xmmTemporalClassification(xcfg);
+    
+    for (int i = 0; i < TOTALSCENES; i++){
+        regression nn;
+        nn.setNumHiddenLayers(3);
+        nnAllReg.push_back(nn);
+        
+        vector<trainingExample> teVec;
+        nnAllTrainingSets.push_back(teVec);
+        
+        trainingExample te;
+        nnAllTempExamples.push_back(te);
+    }
 }
 
 MachineLearning::~MachineLearning() {
@@ -56,51 +73,83 @@ MachineLearning::~MachineLearning() {
 }
 
 void MachineLearning::addDataToXML(vector<trainingExample> examples, string title){
-    
-    lastTagNumber    = mlSettings.addTag(title);
+
+    lastTagNumber = mlSettings.addTag(title);
 
     if( mlSettings.pushTag(title, lastTagNumber) ){
-        cout << "";
+
         for (int i = 0; i < examples.size(); i++) {
-            int tagNum = mlSettings.addTag("Example");
-            cout << "TagNum : " << tagNum << endl;
-            cout << "Size " + ofToString(examples[i].input.size() )<< " Output : ";
+            int tagNum = mlSettings.addTag("example");
+            
+            mlSettings.pushTag("example", i);
+            
             for (int j = 0; j < examples[i].input.size(); j++) {
-                mlSettings.setValue("Example:input", examples[i].input[j]);
-                mlSettings.setValue("Example:label", examples[i].output[i]);
-                cout << (int)examples[i].output[i] << " | ";
+                mlSettings.addValue("input", examples[i].input[j]);
             }
-            cout << endl;
+            string aNeuralNet = "nn_EMG_" + ofToString(i);
+           
+            if (title != aNeuralNet){
+                mlSettings.addValue("label", (int)examples[i].output[i]);
+            }
+            mlSettings.popTag();
         }
+        mlSettings.popTag();
     }
-    mlSettings.popTag();
 }
 
 void MachineLearning::saveDataToXML(){
     mlSettings.clear();
     if (knnTrainingEMG.size() > 0) addDataToXML(knnTrainingEMG, "knnEMG");
-    if (knnTrainingAcc.size() > 0) addDataToXML(knnTrainingAcc, "knnAcc");
-    if (nnTrainingSet.size() > 0) addDataToXML(nnTrainingSet, "nnEMG");
-    mlSettings.save("MLData.xml");
+    
+    for (int i = 0; i < TOTALSCENES; i++){
+         if (nnAllTrainingSets[i].size() > 0)
+             addDataToXML(nnAllTrainingSets[i], "nnEMG_" + ofToString(i));
+    }
+   
+    mlSettings.save(fileName + ".xml");
 }
 
 void MachineLearning::loadDataFromXML(){
     knnTrainingEMG.clear();
-    knnTrainingAcc.clear();
-    nnTrainingSet.clear();
+
+    for (int i = 0; i < TOTALSCENES; i++){
+        nnAllTrainingSets[i].clear();
+    }
     
-//    if( XML.loadFile("mySettings.xml") ){
-//
-//        int numTags = mlSettings.getNumTags("knnEMG:Example");
-//        if (numTags > 0){
-//            for (int i = 0;  i < numTags; i++ ){
-//                trainingExample example;
-//                for (int j = 0; j < )
-//                example.input.push_back(mlSettings.getValue("inputVal_" + ofToString(i)));
-//                knnTrainingEMG
-//            }
-//        }
-//    }
+    if( mlSettings.loadFile(fileName + ".xml") ){
+        if (mlSettings.getNumTags("knnemg") > 0) {
+            cout << "knnEMG " + ofToString( mlSettings.getNumTags("knnemg") )<< endl;
+            dataParseXML("knnEMG", knnTrainingEMG);
+        }
+        
+        for (int i = 0; i < TOTALSCENES; i++){
+            if (mlSettings.getNumTags("nnEmg_" + ofToString(i)) > 0){
+                cout << "nnEmg_ " + ofToString(i) + " " + ofToString( mlSettings.getNumTags("knnemg") )<< endl;
+                dataParseXML("nnEMG_"+ ofToString(i), nnAllTrainingSets[i]);
+            }
+        }
+    } else {
+        ofLogError("Position file did not load!");
+    }
+}
+
+//Reference: http://openframeworks.cc/documentation/ofxXmlSettings/ofxXmlSettings/
+void MachineLearning::dataParseXML(string searchTerm, vector<trainingExample> &trainingVec){
+    mlSettings.pushTag(searchTerm);
+    int numData = mlSettings.getNumTags("example");
+    for(int i = 0; i < numData; i++){
+        mlSettings.pushTag("example", i);
+        int inputNum = mlSettings.getNumTags("input");
+        trainingExample example;
+        for (int j = 0; j < inputNum; j++ ){
+             example.input.push_back(mlSettings.getValue(searchTerm + ":input_" + ofToString(j),0, j));
+        }
+        example.output.push_back(mlSettings.getValue("label", 0, 0));
+
+        trainingVec.push_back(example);
+        mlSettings.popTag();
+    }
+    mlSettings.popTag(); //pop position
 }
 
 void MachineLearning::update(MyoManager &myo) {
@@ -110,21 +159,18 @@ void MachineLearning::update(MyoManager &myo) {
         if(ofGetFrameNum() % 5 == 0){
             
             //Collect data from the myo ready for input into the mahcine learning algorithms
-            vector<double> emgFeature, accFeature;
-            vector<double> emgBayesFeature;
+            vector<double> emgFeature, gyroFeature;
+            vector<double> emgBayes;
             vector<double> emgBayesQuat;
             
             emgFeature = feature.emg.rms;
             
-            emgBayesFeature = feature.emg.bayesRMS;
+            emgBayes = feature.emg.bayesRMS;
             
-//            emgBayesQuat.push_back(feature.emg.bayesRMS);
-//            emgBayesQuat.push_back({feature.acc.quat});
-            
-            accFeature = {
-                feature.acc.quat[0],
-                feature.acc.quat[1],
-                feature.acc.quat[2],
+            gyroFeature = {
+                feature.acc.gyro[0],
+                feature.acc.gyro[1],
+                feature.acc.gyro[2],
             };
             
             //
@@ -133,39 +179,37 @@ void MachineLearning::update(MyoManager &myo) {
 
             //If we are recording a gesture
             if (bCaptureKNN){
+                
                 //Record EMG
                 trainingExample tempEMGExample;
-                tempEMGExample.input = emgBayesFeature;
-                tempEMGExample.output = vector<double>(emgBayesFeature.size(), (double)knnGestureNum);
+                tempEMGExample.input = emgBayes;
+                tempEMGExample.output = { (double)knnGestureNum };
                 knnTrainingEMG.push_back(tempEMGExample);
-                
-                
-           
-                //Record Acc
-                trainingExample tempAccExample;
-                tempAccExample.input = { accFeature };
-                tempAccExample.output = vector<double>(accFeature.size(), (double)knnGestureNum);
-                knnTrainingAcc.push_back(tempAccExample);
                 
                 //Do not run Classifer whilst recording
                 bRunKNN = false;
             }
             
-            if (bCaptureDTW){
-                //Record EMG
-                tempSeriesEMG.input.push_back( { emgBayesFeature } );
-                tempSeriesEMG.label = ofToString(dtwGestureNum);
+            if (bCaptureXMM){
                 
-                //Record Acc
-                tempSeriesAcc.input.push_back( { accFeature } );
-                tempSeriesAcc.label = ofToString(dtwGestureNum);
+                //Following Implemtation from Tests folder on RapidMix API
+                xmmTempData.startRecording(ofToString(xmmGestureNum));
                 
-                bRunDTW = false;
+                vector<double> label = {(double)xmmGestureNum};
+                
+                xmmTempData.addElement(gyroFeature, label);
+                
+                xmmTempData.stopRecording();
+
+                bRunXMM = false;
             }
             
             if (bCaptureReg){
-                nnTempExample.input = { emgBayesFeature };
-                nnTempExample.output = {
+                bRunReg = false;
+                int i = sceneNum;
+                
+                nnAllTempExamples[i].input = { emgBayes };
+                nnAllTempExamples[i].output = {
                     mlGui->getSlider("Ableton Param 1")->getValue(),
                     mlGui->getSlider("Ableton Param 2")->getValue(),
                     mlGui->getSlider("Ableton Param 3")->getValue(),
@@ -173,9 +217,8 @@ void MachineLearning::update(MyoManager &myo) {
                     mlGui->getSlider("Ableton Param 5")->getValue(),
                     mlGui->getSlider("Ableton Param 6")->getValue()
                 };
-                
-                nnTrainingSet.push_back(nnTempExample);
-                bRunReg = false;
+            
+                nnAllTrainingSets[i].push_back(nnAllTempExamples[i]);
             }
         
             //
@@ -183,70 +226,82 @@ void MachineLearning::update(MyoManager &myo) {
             //
         
             if (bTrainKNN) {
-                if(knnTrainingEMG.size() > 0 && knnTrainingAcc.size() > 0) {
+                if(knnTrainingEMG.size() > 0) {
                     knnClassifierEMG.train(knnTrainingEMG);
-                    knnClassifierAcc.train(knnTrainingAcc);
                     bTrainKNN = false;
                     bRunKNN = true;
                 }
             }
             
-            if (bTrainDTW) {
-                if(tempSeriesAcc.input.size() > 0) {
-                    trainingSetAcc.push_back(tempSeriesAcc);
-                    dtwClassifierAcc.train(trainingSetAcc);
-                    tempSeriesAcc.input.clear();
-                    bTrainDTW = false;
-                    bRunDTW = true;
-                }
+            if (bTrainXMM) {
+                bTrainXMM = false;
+//                if(xmmTempData.trainingSet.size() > 0) {
+                    //Training Phase for NN Regression
+                xmmClassifierEMG.train(xmmTempData);
+//                xmmTempData.trainingSet.clear();
+                bRunXMM = true;
+//                }
             }
             
             if (bTrainReg) {
                 //Training Phase for NN Regression
-                if(nnTrainingSet.size() > 0){
-                    nnReg.train(nnTrainingSet);
-                    cout << "Regression Trained " << endl;
+                if(nnAllTrainingSets[sceneNum].size() > 0){
+                    nnAllReg[sceneNum].train(nnAllTrainingSets[sceneNum]);
+                    cout << "Regression_" + ofToString(sceneNum) + " Trained" << endl;
                     bTrainReg = false;
                     bRunReg = true;
                 } else {
-                    cout << "Regression Not Trained" << endl;
+                    cout << "Regression_" + ofToString(sceneNum) + " Not Trained" << endl;
                 }
             }
-                
-        
+
             //
             // :: Run Phase ::
             //
             if (bRunKNN) {
-                knnClassLabelEMG = knnClassifierEMG.run({emgFeature})[0];
-                knnClassLabelAcc = knnClassifierAcc.run({accFeature})[0];
-
-                if ( knnClassLabelEMG == knnClassLabelAcc){
-                    colorKNN = colors[knnClassLabelEMG];
-                }
+                int classLabel = knnClassifierEMG.run({emgBayes})[0];
+                colorKNN = colors[classLabel];
             }
             
-            if (bRunDTW) {
-                dtwClassLabelAcc = dtwClassifierAcc.run({accFeature})[0];
+            if (bRunXMM) {
                 
-                colorDTW = colors[ofToInt(dtwClassLabelAcc)];
-
+//                vector<rapidmix::rapidStream> xmmRS;
+//                for (int i = 0; i < 3; i ++){
+//                    rapidStream<double> rs((int)xmmTempData.trainingSet.size());
+//                    xmmRS.push_back(rs);
+//                    xmmRS[i].pushToWindow(accFeature[i]);
+//                }
+//                
+//                
+//                vector<double> progress(xmmTempData.trainingSet.size());
+////                cout << progress.size() << endl;
+//                for (int i = 0; i < progress.size(); i++) {
+//                    
+////                    xmmRS.pushToWindow(accFeature[0]);
+//                    myXmmPhrase.push_back({xmmRS[0]});
+//
+////                    // we take the second value because run() returns
+////                    // [ likelihood_1, timeProgression_1, .... likelihood_n, timeProgression_n ]
+//                    progress[i] = xmmClassifierEMG.run(myXmmPhrase[i])[1];
+//                    cout << "Progress_" + ofToString(i) << " : "  << progress.size() << endl;
+//                }
+//                
+//                myXmmPhrase.clear();
+//                std::vector<double> sortedProgress = progress;
+//                std::sort(sortedProgress.begin(), sortedProgress.end());
+                
             }
             
             if (bRunReg) {
-                vector<double> regresVals = nnReg.run({ emgBayesFeature });
-               
-                //For Visual Purposes
-                mlGui->getSlider("Ableton Param 1")->setValue(regresVals[0]);
-                mlGui->getSlider("Ableton Param 2")->setValue(regresVals[1]);
-                mlGui->getSlider("Ableton Param 3")->setValue(regresVals[2]);
-                mlGui->getSlider("Ableton Param 4")->setValue(regresVals[3]);
-                mlGui->getSlider("Ableton Param 5")->setValue(regresVals[4]);
-                mlGui->getSlider("Ableton Param 6")->setValue(regresVals[5]);
-                
-                //Actually Changing the Values
-                for (int i = 0; i < regresVals.size(); i++){
-                    outputVals[i] = regresVals[i];
+                if (nnAllTrainingSets[sceneNum].size() > 0){
+                    regressVals = nnAllReg[sceneNum].run({ emgBayes });
+                    //For Visual Purposes
+                    mlGui->getSlider("Ableton Param 1")->setValue(regressVals[0]);
+                    mlGui->getSlider("Ableton Param 2")->setValue(regressVals[1]);
+                    mlGui->getSlider("Ableton Param 3")->setValue(regressVals[2]);
+                    mlGui->getSlider("Ableton Param 4")->setValue(regressVals[3]);
+                    mlGui->getSlider("Ableton Param 5")->setValue(regressVals[4]);
+                    mlGui->getSlider("Ableton Param 6")->setValue(regressVals[5]);
                 }
             }
         }
@@ -271,19 +326,14 @@ void MachineLearning::draw() {
     
     //DTW Indicator
     ofSetColor(255);
-    ofDrawBitmapString("DTW Examples EMG: " + ofToString(tempSeriesEMG.input.size()), 50, 460);
-    ofDrawBitmapString("DTW Examples Acc: " + ofToString(tempSeriesAcc.input.size()), 50, 490);
-    ofDrawBitmapString("DTW Set Num EMG: " + ofToString(trainingSetEMG.size()), 50, 510);
-    ofDrawBitmapString("DTW Set Num Acc: " + ofToString(trainingSetAcc.size()), 50, 540);
-    ofDrawBitmapString("NN Set Num: " + ofToString(nnTrainingSet.size()), 50, 570);
+    ofDrawBitmapString("XMM Training Data: " + ofToString(xmmTempData.trainingSet.size()), 50, 460);
+    ofDrawBitmapString("XMM Phrase Size: " + ofToString(xmmPhrases.size()), 50, 480);
     
-    ofPushStyle();
-    ofSetColor(colorDTW);
-    ofDrawRectangle(250, 450, 80,80);
-    ofSetColor(0);
-    ofDrawBitmapString("DTW", 250 + 5, 460 + 25);
-    ofDrawBitmapString("Class: " + ofToString(dtwClassLabelEMG), 255, 505);
-    ofPopStyle();
+    for (int i = 0; i < TOTALSCENES; i++){
+        if (sceneNum == i){
+            ofDrawBitmapString("NN_" + ofToString(i) + " Set Num: " + ofToString(nnAllTrainingSets[i].size()), 50, 570);
+        }
+    }
 }
 
 void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
@@ -292,28 +342,36 @@ void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
     if (guiLabel == "Clear KNN"){
         bRunKNN = false;
         bCaptureKNN = false;
-        knnClassifierEMG.reset();
-        knnClassifierAcc.reset();
         knnTrainingEMG.clear();
-        knnTrainingAcc.clear();
-    } else if (guiLabel == "Clear DTW"){
-        bRunDTW = false;
-        bCaptureDTW = false;
-        dtwClassifierEMG.reset();
-        dtwClassifierAcc.reset();
-        trainingSetEMG.clear();
-        trainingSetAcc.clear();
-    } else if (guiLabel == "Clear NN"){
+        knnClassifierEMG.reset();
+    }
+    
+    if (guiLabel == "Clear XMM"){
+        bRunXMM = false;
+        bCaptureXMM = false;
+        xmmPhrases.clear();
+        xmmClassifierEMG.reset();
+        xmmTempData.trainingSet.clear();
+    }
+    
+    if (guiLabel == "Clear NN"){
         bRunReg = false;
         bCaptureReg = false;
-        nnReg.reset();
-        nnTrainingSet.clear();
-    } else if (guiLabel == "KNN Train & Run") {
+        
+        for (int i = 0; i < TOTALSCENES; i++){
+            nnAllTrainingSets[i].clear();
+            nnAllReg[i].reset();
+        }
+    }
+    
+    if (guiLabel == "KNN Train & Run") {
         bTrainKNN = true;
     } else if (guiLabel == "NN Train & Run") {
         bTrainReg = true;
-    } else if (guiLabel == "DTW Train & Run") {
-        bTrainDTW = true;
+    } else if (guiLabel == "Stop NN") {
+        bRunReg = false;
+    } else if (guiLabel == "XMM Train & Run") {
+        bTrainXMM = true;
     } else if (guiLabel == "Save All"){
         saveDataToXML();
     } else if (guiLabel == "Load Preset"){
@@ -325,7 +383,7 @@ void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
 void MachineLearning::onToggleEvent(ofxDatGuiToggleEvent e){
     string guiLabel = e.target->getLabel();
     
-    if (guiLabel == "NN Record"){
+    if (guiLabel == "NN Record") {
         bCaptureReg = e.target->getChecked();
     }
 }
@@ -341,11 +399,31 @@ void MachineLearning::onMatrixEvent(ofxDatGuiMatrixEvent e){
     if (guiLabel == "KNN Record"){
         knnGestureNum = whichButton;
         bCaptureKNN = e.enabled;
-    } else if (guiLabel == "DTW Record"){
-        dtwGestureNum = whichButton;
-        bCaptureDTW = e.enabled;
+    } else if (guiLabel == "XMM Record"){
+        xmmGestureNum = whichButton;
+        bCaptureXMM = e.enabled;
     } else if (guiLabel == "Scene"){
+        bRunReg = false;
         sceneNum = whichButton;
-        sceneActivate = e.enabled;
+
+        for(int i =0; i < TOTALSCENES; i++){
+            if (i == sceneNum){
+                mlGui->getMatrix("Scene")->getChildAt(i)->setSelected(true);
+            } else {
+                mlGui->getMatrix("Scene")->getChildAt(i)->setSelected(false);
+            }
+        }
+        
+        bRunReg = true;
+    }
+}
+
+void MachineLearning::onTextInputEvent(ofxDatGuiTextInputEvent e)
+{
+    string guiLabel = e.target->getLabel();
+    
+    if (guiLabel == "Filename") {
+        fileName = e.target->getText();
+        transform(fileName.begin(), fileName.end(), fileName.begin(), ::tolower);
     }
 }

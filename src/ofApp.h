@@ -1,9 +1,10 @@
 #pragma once
 
 #include "ofMain.h"
-#include "SceneOSCController.hpp"
-#include "MachineLearning.hpp"
+
 #include "MyoManager.hpp"
+#include "MachineLearning.hpp"
+#include "SceneOSCController.hpp"
 
 class ofApp : public ofBaseApp{
 

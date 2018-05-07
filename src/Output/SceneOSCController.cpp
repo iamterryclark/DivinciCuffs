@@ -19,33 +19,45 @@ SceneOSCController::~SceneOSCController(){
 void SceneOSCController::update(MachineLearning &ml){
     
     if (ofGetFrameNum() % 2 == 0){
-        if (!ml.sceneActivate){
-            double value1, value2, value3, value4;
-            
+        vector<double> paramValues(6);
+        
+        paramValues[0] = ml.mlGui->getSlider("Ableton Param 1")->getValue();
+        paramValues[1] = ml.mlGui->getSlider("Ableton Param 2")->getValue();
+        paramValues[2] = ml.mlGui->getSlider("Ableton Param 3")->getValue();
+        paramValues[3] = ml.mlGui->getSlider("Ableton Param 4")->getValue();
+        paramValues[4] = ml.mlGui->getSlider("Ableton Param 5")->getValue();
+        paramValues[5] = ml.mlGui->getSlider("Ableton Param 6")->getValue();
+        
+        if (!(ml.sceneActivate[ml.sceneNum])){
             switch(ml.sceneNum){
-                case 1:
-                    value1 = ml.mlGui->getSlider("Ableton Param 1")->getValue();
-                    value2 = ml.mlGui->getSlider("Ableton Param 2")->getValue();
-                    value3 = ml.mlGui->getSlider("Ableton Param 3")->getValue();
-                    value4 = (int)ofMap(ml.mlGui->getSlider("Ableton Param 4")->getValue(), 0, 1, 0, 20);
+                case 0:
                     
-                    streamToInstrumentDevice("/live/device", 1, 0, 2, value1);
-                    streamToInstrumentDevice("/live/device", 1, 0, 3, value2);
-                    streamToInstrumentDevice("/live/device", 1, 0, 6, value3);
-                    streamToInstrumentDevice("/live/device", 1, 0, 13, value4);
+                    paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
+                    
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
+                    
+                    break;
+                case 1:
+                    paramValues[0] = ofMap(paramValues[0], 0, 1, 0, 127);
+                    paramValues[1] = ofMap(paramValues[1], 0, 1, 0, 127);
+                    
+                    streamToInstrumentDevice("/live/device", 2, 1, 5, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 2, 1, 6, paramValues[1]);
                     break;
                 case 2:
-                    value1 = ofMap(ml.outputVals[0], 0, 254, 0, 1);
-                    value2 = ofMap(ml.outputVals[1], 0, 254, 0, 1);
-                    
-                    streamToInstrumentDevice("/live/device", 2, 1, 5, value1);
-                    streamToInstrumentDevice("/live/device", 2, 1, 6, value2);
+                    streamToInstrumentDevice("/live/device", 3, 0, 159, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 115, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 117, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 138, paramValues[3]);
                     break;
                 default:
                     
                     break;
             }
-            
+                
             while(oscRec.hasWaitingMessages())
             {
                 // get the next message
@@ -64,26 +76,22 @@ void SceneOSCController::update(MachineLearning &ml){
                 }
             }
         } else {
-            double value1, value2, value3, value4;
-
+            
             switch(ml.sceneNum){
                 case 0:
-                    value1 = ml.outputVals[0];
-                    value2 = ml.outputVals[1];
-                    value3 = ml.outputVals[2];
-                    value4 = (int)ofMap(ml.outputVals[3], 0, 1, 0, 20);
+                    paramValues[3]  = (int)ofMap(paramValues[3], 0, 1, 0, 20);
                     
-                    streamToInstrumentDevice("/live/device", 1, 0, 2, value1);
-                    streamToInstrumentDevice("/live/device", 1, 0, 3, value2);
-                    streamToInstrumentDevice("/live/device", 1, 0, 6, value3);
-                    streamToInstrumentDevice("/live/device", 1, 0, 13, value4);
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
                     break;
                 case 1:
-                    value1 = ofMap(ml.outputVals[0], 0, 254, 0, 1);
-                    value2 = ofMap(ml.outputVals[1], 0, 254, 0, 1);
+                    paramValues[0] = ofMap(paramValues[0], 0, 1, 0, 127);
+                    paramValues[1] = ofMap(paramValues[1], 0, 1, 0, 100);
                     
-                    streamToInstrumentDevice("/live/device", 2, 1, 5, value1);
-                    streamToInstrumentDevice("/live/device", 2, 1, 6, value2);
+                    streamToInstrumentDevice("/live/device", 2, 1, 5, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 2, 1, 6, paramValues[1]);
                     break;
                 case 2:
                     

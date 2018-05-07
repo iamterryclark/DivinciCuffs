@@ -19,6 +19,8 @@ void ofApp::draw(){
     myoManager.draw();
     oscControl.draw( ofVec2f( 50, ofGetHeight() - 100) );
     interactiveML.draw();
+    
+    ofDrawBitmapString("FrameRate: " + ofToString((int)ofGetFrameRate()), ofGetWidth()-200, ofGetHeight()-10);
 }
 
 void ofApp::exit(){

@@ -8,9 +8,14 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxRapidLib.h"
-#include "MyoManager.hpp"
+#include <algorithm>
+
+//OF Addons
 #include "ofxXmlSettings.h"
+
+//My Classes
+#include "MyoManager.hpp"
+#define TOTALSCENES 9
 
 class MachineLearning {
 private:
@@ -24,40 +29,47 @@ public:
     void addDataToXML(vector<trainingExample> example, string addToName = "");
     void saveDataToXML();
     void loadDataFromXML();
+    void dataParseXML(string searchTerm,vector<trainingExample> &trainingVec);
 
     //Gui Events
     void onButtonEvent(ofxDatGuiButtonEvent e);
     void onToggleEvent(ofxDatGuiToggleEvent e);
     void onSliderEvent(ofxDatGuiSliderEvent e);
     void onMatrixEvent(ofxDatGuiMatrixEvent e);
+    void onTextInputEvent(ofxDatGuiTextInputEvent e);
     
+    //Gui Params
     ofxDatGui * mlGui;
+    string fileName;
+    ofxXmlSettings mlSettings;
+    int lastTagNumber;
     
     //KNN Recognition
-    classification knnClassifierEMG, knnClassifierAcc;
-    vector<trainingExample> knnTrainingEMG, knnTrainingAcc;
+    classification knnClassifierEMG;
+    vector<trainingExample> knnTrainingEMG;
     bool bCaptureKNN, bTrainKNN, bRunKNN;
-    
     int knnClassLabelEMG = 0;
     int knnClassLabelAcc = 0;
     int knnGestureNum = 0;
     
-    //DTW Recognition
-    seriesClassification dtwClassifierEMG, dtwClassifierAcc;
-    vector<trainingSeries> trainingSetEMG, trainingSetAcc;
-    trainingSeries tempSeriesEMG, tempSeriesAcc;
-    bool bCaptureDTW, bTrainDTW, bRunDTW;
-    int dtwGestureNum = 0;
-    string dtwClassLabelEMG = "";
-    string dtwClassLabelAcc = "";
+    //XMM Recognition
+    rapidmix::xmmTemporalClassification xmmClassifierEMG;
+    rapidmix::trainingData xmmTempData;
+    vector<double> xmmPhrases;
+    bool bCaptureXMM, bTrainXMM, bRunXMM;
+    int xmmGestureNum;
+    
     //Regression
-    vector<trainingExample> nnTrainingSet;
-    trainingExample nnTempExample;
-    regression nnReg;
+    vector<regression> nnAllReg;
+    vector <vector<trainingExample>> nnAllTrainingSets;
+    vector<trainingExample> nnAllTempExamples;
     bool bCaptureReg, bTrainReg, bRunReg;
+    vector<double> regressVals;
+    vector<double> outputReg = {0,0,0,0,0,0,0,0,0};
     
-    ofColor colorKNN, colorDTW;
     
+    //Output Visualisor for classification type labels
+    ofColor colorKNN, colorXMM;
     vector<ofColor> colors = {
         ofColor::silver,
         ofColor::indigo,
@@ -68,12 +80,7 @@ public:
         ofColor::yellow,
     };
     
-    vector<double> outputVals = {0,0,0,0,0,0,0,0,0};
-    
+    //Scene Information
     int sceneNum = 0;
-    bool sceneActivate = false;
-    
-    ofxXmlSettings mlSettings;
-    int lastTagNumber;
-
+    vector<bool> sceneActivate = vector<bool>(4, false);
 };

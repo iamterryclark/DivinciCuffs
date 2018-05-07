@@ -12,7 +12,7 @@
 //Addon Classes
 #include "ofxMyo.h"
 #include "ofxDatGui.h"
-#include "ofxRapidLib.h"
+#include "rapidmix.h"
 #include "ofxAssimpModelLoader.h"
 
 //My Classes
@@ -28,7 +28,6 @@ public:
     
     void update();
     void draw();
-    
     void drawGui(ofVec2f pos);
     void drawModel(ofVec2f pos, int id);
     void drawGraph(ofVec2f pos, string title, vector<double> values, int min, int max);
@@ -40,23 +39,23 @@ public:
     void onButtonEvent(ofxDatGuiButtonEvent e);
     void onSliderEvent(ofxDatGuiSliderEvent e);
     
+    //Store Myo data here
     vector<Feature> feature;
     
-    vector< rapidStream<double> *> emgRawStreams, emgNormStreams;
-    vector< rapidStream<double> *> accNormStreams;
+    //Rapid Streams
+    vector< rapidStream<double> *> emgRawStreams;
+    vector< rapidStream<double> *> accStreams;
     vector< rapidStream<double> *> accFODStreams;
 
     //Gui Interface
     ofxDatGui* myoGui;
-    
-    ofxAssimpModelLoader model;
-    
-    ofLight light;
-    
     float lowerThresh = 0;
     float higherThresh = 30;
     int windowSize = 20;
-    int bayesSigDiv = 100;
     
-//    ofxJSONElement savedGestures;
+    //For Model Display
+    ofxAssimpModelLoader model;
+    ofLight light;
+    
+    
 };

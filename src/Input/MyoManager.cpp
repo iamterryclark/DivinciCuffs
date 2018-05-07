@@ -19,10 +19,11 @@ MyoManager::MyoManager()
     
     myoGui->addHeader(" Myo Functions ");
     myoGui->addBreak()->setHeight(10.0f);
-    myoGui->addLabel(" :: Sensor Psrameters :: ");
+    myoGui->addLabel(" :: Myo Parameters :: ");
+    myoGui->addButton("Set Myo Origin");
     myoGui->addSlider("Lower Threshold", 0, 100);
     myoGui->addSlider("Higher Threshold", 0, 100);
-//    myoGui->addSlider("WindowSize", 1, 60);
+    //    myoGui->addSlider("WindowSize", 1, 60);
     myoGui->addLabel(" :: Bayes Filter Params :: ");
     myoGui->addSlider("Bayes JumpRate", 1, 10);
     myoGui->addSlider("Bayes MVC", 1, 100);
@@ -32,21 +33,20 @@ MyoManager::MyoManager()
     myoGui->onButtonEvent(this, &MyoManager::onButtonEvent);
     myoGui->onSliderEvent(this, &MyoManager::onSliderEvent);
 
-    for (int i = 0; i < 1; i++){
+    for (int i = 0; i < myo.getDevices().size(); i++){
         Feature feat(i);
         feature.push_back(feat);
         
         for (int j = 0; j < 8; j++){
             //Set window size of all 8 emg streams
             emgRawStreams.push_back(new rapidStream<double>(windowSize));
-//            emgNormStreams.push_back(new rapidStream<double>(windowSize));
-            emgRawStreams[j]->bayesSetJumpRate(0);
-            emgRawStreams[j]->bayesSetMVC(0);
-            emgRawStreams[j]->bayesSetDiffusion(0);
+            emgRawStreams[j]->bayesSetJumpRate(10);
+            emgRawStreams[j]->bayesSetMVC(90);
+            emgRawStreams[j]->bayesSetDiffusion(2);
         }
         
         for (int j = 0; j < 3; j++){
-            accNormStreams.push_back(new rapidStream<double>(windowSize));
+            accStreams.push_back(new rapidStream<double>(windowSize));
             accFODStreams.push_back(new rapidStream<double>(windowSize));
         }
     }
@@ -71,7 +71,7 @@ void MyoManager::update(){
     for ( int i=0; i<myo.getDevices().size(); i++ ) {
         
         feature[i].identity = myo.getDevices()[i]->getId();
-        
+
         //For the model
         feature[i].acc.pitch = myo.getDevices()[i]->getPitch();
         feature[i].acc.yaw = myo.getDevices()[i]->getYaw();
@@ -79,42 +79,36 @@ void MyoManager::update(){
 
         feature[i].acc.raw = myo.getDevices()[i]->getAccel();
         feature[i].acc.quat = myo.getDevices()[i]->getQuaternion();
-        
+
         for( int j = 0; j < 3; j++){
             //Add accellerometer data to the rapidStream
-            accNormStreams[j]->pushToWindow(feature[i].acc.quat[j]);
-            
+            accStreams[j]->pushToWindow(feature[i].acc.quat[j]);
+
             //Capture the First Order Difference of Quat
-            feature[i].acc.fod[j] = accNormStreams[j]->acceleration();
-            
+            feature[i].acc.fod[j] = accStreams[j]->acceleration();
+
             //Push the FOD to another rapidstream object for smoothing, based on its windowSize
             accFODStreams[j]->pushToWindow(feature[i].acc.fod[j]);
             feature[i].acc.fodRMS[j] = accFODStreams[j]->rms();
         }
-        
+
         //Push raw emg values into rapidStream to utilise other functions RMS, Zero Crossings etc
         for (int j = 0; j < 8; j++){
             //Capture raw EMG
             feature[i].emg.raw[j] = (double)myo.getDevices()[i]->getEmgSamples()[j];
-            
+
             //Pass to rapidstream to get calculated rms, and other statistical analysis
             emgRawStreams[j]->pushToWindow(feature[i].emg.raw[j]);
-            
+
             //Capture the statistical analysis for later passing to machine learning algorithm
+            feature[i].emg.rms[j] = emgRawStreams[j]->rms();
             feature[i].emg.mean[j] = emgRawStreams[j]->mean();
             feature[i].emg.stdDev[j] = emgRawStreams[j]->standardDeviation();
-//            feature[i].emg.zeroXs[j] = emgRawStreams[j]->numZeroCrossings();
-//            cout << feature[i].emg.zeroXs[j] << endl;
-           
-            //Normalise EMG Values = (current - mean) / Standard Dev
-//            feature[i].emg.rawNormalised[j] = (feature[i].emg.raw[j] - feature[i].emg.mean[j] ) / feature[i].emg.stdDev[j];
-        
-            feature[i].emg.rms[j] = emgRawStreams[j]->rms();
             feature[i].emg.min[j] = emgRawStreams[j]->minimum();
             feature[i].emg.max[j] = emgRawStreams[j]->maximum();
             feature[i].emg.bayesRMS[j] = emgRawStreams[j]->bayesFilter( feature[i].emg.rms[j] );
         }
-        
+
         /*
             I needed to generate the below number sequence in order to
             capture more expressive information about which position
@@ -135,11 +129,7 @@ void MyoManager::update(){
         
         int num = 0, den = 0, index = 0;
         for (int j = 7; j > 0; j--){
-//            num++;
-//            cout << num << endl;
             for (int k = 0; k < j; k++){
-//              cout << den << endl;
-                //cout << index << endl;
                 den = num + k + 1;
                 feature[i].emg.rmsRatio[index] = feature[i].emg.rms[num] / feature[i].emg.rms[den];
                 feature[i].emg.bayesRatio[index] = feature[i].emg.bayesRMS[num] / feature[i].emg.bayesRMS[den];
@@ -167,14 +157,13 @@ void MyoManager::drawGui(ofVec2f pos){
         
         drawGraph(ofVec2f(pos.x, pos.y + 50),  "1) RMS", feature[i].emg.rms, 0, 127);
         drawGraph(ofVec2f(pos.x, pos.y + 150), "2) BayesFitler", feature[i].emg.bayesRMS, 0, 1);
-        drawGraph(ofVec2f(pos.x + 200, pos.y + 50), "3) RMSRatio", feature[i].emg.rmsRatio, 0, 10);
+        drawGraph(ofVec2f(pos.x + 200, pos.y + 50), "3) RMSRatio", feature[i].emg.rmsRatio, 0, 50);
         drawGraph(ofVec2f(pos.x + 350, pos.y + 50), "4) BayesRatio", feature[i].emg.bayesRatio, 0, 10);
         drawGraph(ofVec2f(pos.x + 200, pos.y + 250), "5) RMSStDev", feature[i].emg.stdDev, 0, 100);
         drawGraph(ofVec2f(pos.x, pos.y + 250), "6) Acc", feature[i].acc.raw, -1, 1);
         drawGraph(ofVec2f(pos.x + 350, pos.y + 250), "6) AccFODRMS", feature[i].acc.fodRMS, -1, 1);
-        drawGraph(ofVec2f(pos.x + 650, pos.y + 250), "6) ZeroXs", feature[i].acc.zeroXs, 0, 10);
         
-        drawModel(ofVec2f(pos.x, pos.y + 250), i);
+        drawModel(ofVec2f(pos.x, pos.y + 50), i);
     }
 }
 
@@ -192,10 +181,13 @@ void MyoManager::drawModel(ofVec2f pos, int id){
         
         ofPushMatrix();
         {
+           
             ofTranslate( pos.x + model.getPosition().x, pos.y + model.getPosition().y);
             ofRotate(ofRadToDeg(feature[id].acc.quat.x()), 0, 0, 1);
             ofRotate(ofRadToDeg(feature[id].acc.quat.y()), 1, 0, 0);
             ofRotate(ofRadToDeg(feature[id].acc.quat.z()), 0, 1, 0);
+            ofDrawAxis(20);
+            ofDrawRotationAxes(20);
             ofTranslate(-model.getPosition().x, -model.getPosition().y);
             model.drawFaces();
         }
@@ -205,6 +197,7 @@ void MyoManager::drawModel(ofVec2f pos, int id){
         ofDisableDepthTest();
         ofDisableLighting();
         ofDisableSeparateSpecularLight();
+       
     }
     ofPopStyle();
 }
@@ -279,8 +272,6 @@ void MyoManager::onSliderEvent(ofxDatGuiSliderEvent e){
         for (int i = 0; i < 8; i++){
             emgRawStreams[i]->bayesSetMVC(value);
         }
-    } else if (guiLabel == "Bayes Signal Divider") {
-        bayesSigDiv = (int)e.target->getValue();
     }
     
     

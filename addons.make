@@ -1,8 +1,6 @@
 ofxAssimpModelLoader
 ofxDatGui
 ofxDmx
-ofxMaxim
 ofxMyo
 ofxOsc
-ofxRapidLib
 ofxXmlSettings

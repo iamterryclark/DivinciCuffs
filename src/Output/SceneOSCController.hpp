@@ -3,9 +3,7 @@
 //  BioPerformanceTool
 //
 //  Created by Terry Clark on 22/03/2018.
-//
-
-//This code has bee used on my second year project and adapted for this year a reference can be found here:
+//This code has been used on my second year project 'ReactGlow' and adapted for this year
 
 #pragma once
 
@@ -13,10 +11,9 @@
 #include "ofxOsc.h"
 #include "MachineLearning.hpp"
 
-#define HOST "172.20.10.10"
+#define HOST "172.17.0.189"
 #define PORTOUT 9005
 #define PORTRTN 9006
-#define TOTALSCENES 6
 
 class SceneOSCController {
 private:
