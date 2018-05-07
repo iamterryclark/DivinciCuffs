@@ -314,8 +314,6 @@ void MachineLearning::draw() {
     ofSetColor(255);
     ofDrawBitmapString("KNN Examples EMG: " + ofToString(knnTrainingEMG.size()), 50, 350);
 
-    ofDrawBitmapString("KNN Examples Acc: " + ofToString(knnTrainingAcc.size()), 50, 370);
-
     ofPushStyle();
     ofSetColor(colorKNN);
     ofDrawRectangle(250, 320, 80,80);

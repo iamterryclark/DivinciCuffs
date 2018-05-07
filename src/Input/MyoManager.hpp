@@ -13,6 +13,7 @@
 #include "ofxMyo.h"
 #include "ofxDatGui.h"
 #include "rapidmix.h"
+
 #include "ofxAssimpModelLoader.h"
 
 //My Classes
