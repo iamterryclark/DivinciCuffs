@@ -14,14 +14,14 @@ MyoManager::MyoManager()
     //Load GUI
     myoGui = new ofxDatGui( ofxDatGuiAnchor::TOP_RIGHT );
     
-    myoGui->setPosition(ofGetWidth() - myoGui->getWidth(), 400);
+    myoGui->setPosition(ofGetWidth() -(myoGui->getWidth()*2), 0);
     myoGui->setAssetPath("");
     
     myoGui->addHeader(" Myo Functions ");
     myoGui->addBreak()->setHeight(10.0f);
     myoGui->addLabel(" :: Myo Parameters :: ");
     myoGui->addSlider("Lower Threshold", 0, 100);
-    myoGui->addSlider("Higher Threshold", 0, 100);
+    myoGui->addSlider("Higher Threshold", 0, 10);
     //    myoGui->addSlider("WindowSize", 1, 60);
     myoGui->addLabel(" :: Bayes Filter Params :: ");
     myoGui->addSlider("Bayes JumpRate", 1, 10);

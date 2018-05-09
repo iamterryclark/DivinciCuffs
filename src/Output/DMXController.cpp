@@ -12,30 +12,30 @@ DMXController::DMXController(){
     dmx.connect(0, 60); //Serial Port Number
     dmx.update(true); //Resets the lights to 0 position in all channel
     
-    profiles.push_back(&tProfPlus1);
-    profiles.push_back(&tProfPlus2);
+    washes.push_back(new MH2);
+    washes.push_back(new MH2);
+
+//    Setup address of each light
+    washes[0]->setup(1, &dmx);
+    washes[1]->setup(7, &dmx);
     
-    //Setup address of each light
-    profiles[0]->setup(1, &dmx);
-    profiles[1]->setup(7, &dmx);
-    
-    lights.push_back(profiles[0]);
-    lights.push_back(profiles[1]);
+    washes[0]->setPosition(ofVec2f(600,ofGetHeight()-100));
+    washes[1]->setPosition(ofVec2f(700,ofGetHeight()-100));
 }
 
-void DMXController::update(MachineLearning &interactiveML){
-    profiles[0]->setColor(ofVec4f(0,0,0,0));
-    profiles[1]->setColor(ofVec4f(0,0,0,0));
+DMXController::~DMXController(){
+}
 
-    for (auto light : lights){
-        light->update();
+void DMXController::update(MachineLearning &ml){
+    for (auto wash : washes){
+        wash->setColor(ofColor(255));
     }
-    
     if (dmx.isConnected()) dmx.update(); // Gets next dmx message
 }
 
 void DMXController::draw(){
-    for (int i = 0 ; i < lights.size(); i++){
-        lights[i]->display(ofVec2f(500 + (100 * i), ofGetHieght() - 100);
+    ofDrawBitmapString("DMX OutPut EMG", 580, ofGetHeight()-150);
+    for (int i = 0 ; i < washes.size(); i++){
+        washes[i]->display();
     }
 }

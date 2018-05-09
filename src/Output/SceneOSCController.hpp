@@ -11,7 +11,8 @@
 #include "ofxOsc.h"
 #include "MachineLearning.hpp"
 
-#define HOST "172.17.0.189"
+//#define HOST "172.17.0.189"
+#define HOST "localhost"
 #define PORTOUT 9005
 #define PORTRTN 9006
 

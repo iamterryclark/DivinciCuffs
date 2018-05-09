@@ -57,9 +57,9 @@ MachineLearning::MachineLearning()
     
     for (int i = 0; i < TOTALSCENES; i++){
         regression nn;
-        nn.setNumHiddenLayers(2);
+        nn.setNumHiddenLayers(1);
         nn.setNumHiddenNodes(3);
-        nn.setNumEpochs(100);
+        nn.setNumEpochs(200);
         nnAllReg.push_back(nn);
         
         vector<trainingExample> teVec;
@@ -192,7 +192,7 @@ bool MachineLearning::segmentLimit(vector<double> inputCheck, float threshold) {
 
 void MachineLearning::update(MyoManager &myo) {
     for (int i = 0; i < myo.feature.size(); i++){
-        if(ofGetFrameNum() % 2 == 0){
+        if(ofGetFrameNum() % 3 == 0){
           Feature feature = myo.feature[i];
             //Collect data from the myo ready for input into the mahcine learning algorithms
             vector<double> emgRMS, emgSTD, emgRMSRatio, emgSTDRatio, emgBayesRatio, gyroFeature;
@@ -211,7 +211,6 @@ void MachineLearning::update(MyoManager &myo) {
             //
             // :: Testing / Recording Phase ::
             //
-
             //If we are recording a gesture
             if (bCaptureKNN){
                 
@@ -247,7 +246,16 @@ void MachineLearning::update(MyoManager &myo) {
                 bRunReg = false;
                 int i = sceneNum;
                 
-                nnAllTempExamples[i].input = { emgSTDRatio };
+                switch(i){
+                    case 0:
+                        nnAllTempExamples[i].input = { emgSTDRatio };
+                        break;
+                        
+                    case 1:
+                        nnAllTempExamples[i].input = { gyroFeature };
+                        break;
+                        
+                }
                 nnAllTempExamples[i].output = {
                     mlGui->getSlider("Ableton Param 1")->getValue(),
                     mlGui->getSlider("Ableton Param 2")->getValue(),
@@ -256,6 +264,7 @@ void MachineLearning::update(MyoManager &myo) {
                     mlGui->getSlider("Ableton Param 5")->getValue(),
                     mlGui->getSlider("Ableton Param 6")->getValue()
                 };
+               
             
                 nnAllTrainingSets[i].push_back(nnAllTempExamples[i]);
             }
@@ -297,10 +306,11 @@ void MachineLearning::update(MyoManager &myo) {
             //
             if (bRunKNN) {
                 //Quick and dirty segmentation will make this user friendly at some point
-//                if(segmentLimit(emgBayesRatio, 0.2)){
+                if(segmentLimit(emgBayesRatio, myo.higherThresh)){
+                    cout << "Over Limit" << emgBayesRatio[3] << endl;
                     int classLabel = knnClassifierEMG.run({emgBayesRatio})[0];
                     colorKNN = colors[classLabel];
-//                }
+                }
             }
             
             if (bRunXMM) {
@@ -309,7 +319,15 @@ void MachineLearning::update(MyoManager &myo) {
             
             if (bRunReg) {
                 if (nnAllTrainingSets[sceneNum].size() > 0){
-                    regressVals = nnAllReg[sceneNum].run({ emgSTDRatio });
+                    switch(sceneNum){
+                        case 0:
+                            regressVals = nnAllReg[sceneNum].run({ emgSTDRatio });
+                            break;
+                        case 1:
+                            regressVals = nnAllReg[sceneNum].run({ gyroFeature });
+                            break;
+                    }
+                    
                     //For Visual Purposes
                     mlGui->getSlider("Ableton Param 1")->setValue(regressVals[0]);
                     mlGui->getSlider("Ableton Param 2")->setValue(regressVals[1]);
@@ -372,7 +390,7 @@ void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
         
         for (int i = 0; i < TOTALSCENES; i++){
             nnAllTrainingSets[i].clear();
-            nnAllReg[i].reset();
+//            nnAllReg[i].reset();
         }
     }
     

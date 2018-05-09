@@ -9,22 +9,19 @@
 
 #include "ofMain.h"
 #include "ofxDmx.h"
-#include "ProfilePlus.hpp"
+#include "MH2.hpp"
 #include "MachineLearning.hpp"
 
 class DMXController{
 public:
     DMXController();
-    void update(MachineLearning &interactiveML);
+    ~DMXController();
+    void update(MachineLearning &ml);
     void draw();
     //DMX object
     ofxDmx dmx;
-    
-    vector<Profile*> profiles;
-    
-    vector<DMXLight*> lights;
-    
-    ofEasyCam camera;
+    vector<MH2*> washes;
+//    vector<DMXLight*> lights;
 };
 
 
