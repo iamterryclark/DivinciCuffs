@@ -2,9 +2,11 @@
 
 #include "ofMain.h"
 
+//My Classes
 #include "MyoManager.hpp"
 #include "MachineLearning.hpp"
 #include "SceneOSCController.hpp"
+#include "DMXController.hpp"
 
 class ofApp : public ofBaseApp{
 
@@ -28,5 +30,6 @@ class ofApp : public ofBaseApp{
     MyoManager myoManager;
     MachineLearning interactiveML;
     SceneOSCController oscControl;
+    DMXController dmxControl;
     
 };

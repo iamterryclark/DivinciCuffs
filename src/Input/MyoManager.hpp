@@ -12,9 +12,10 @@
 //Addon Classes
 #include "ofxMyo.h"
 #include "ofxDatGui.h"
-#include "rapidmix.h"
-
 #include "ofxAssimpModelLoader.h"
+
+//Rapid Mix
+#include "rapidmix.h"
 
 //My Classes
 #include "Feature.h"

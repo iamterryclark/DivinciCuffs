@@ -8,19 +8,17 @@
 #pragma once
 
 #include "ofMain.h"
-//#include "ofxDmx.h"
+#include "ofxDmx.h"
 #include "ProfilePlus.hpp"
+#include "MachineLearning.hpp"
 
 class DMXController{
 public:
     DMXController();
-    void update();
+    void update(MachineLearning &interactiveML);
     void draw();
     //DMX object
     ofxDmx dmx;
-    
-    //Light Profiles
-    ProfilePlus tProfPlus1, tProfPlus2;
     
     vector<Profile*> profiles;
     

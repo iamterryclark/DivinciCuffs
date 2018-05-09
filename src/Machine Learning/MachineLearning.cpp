@@ -57,7 +57,9 @@ MachineLearning::MachineLearning()
     
     for (int i = 0; i < TOTALSCENES; i++){
         regression nn;
-        nn.setNumHiddenLayers(3);
+        nn.setNumHiddenLayers(2);
+        nn.setNumHiddenNodes(3);
+        nn.setNumEpochs(100);
         nnAllReg.push_back(nn);
         
         vector<trainingExample> teVec;
@@ -86,11 +88,17 @@ void MachineLearning::addDataToXML(vector<trainingExample> examples, string titl
             for (int j = 0; j < examples[i].input.size(); j++) {
                 mlSettings.addValue("input", examples[i].input[j]);
             }
-            string aNeuralNet = "nn_EMG_" + ofToString(i);
-           
-            if (title != aNeuralNet){
+            
+            //Seperate Process for Regression outputs
+            if (title == "nnEMG_" + ofToString(sceneNum)){
+                for (int k = 0; k < examples[i].output.size(); k++){
+                    mlSettings.addValue("output", examples[i].output[k]);
+//                    cout << examples[i].output[k] << endl;
+                }
+            } else {
                 mlSettings.addValue("label", (int)examples[i].output[i]);
             }
+            
             mlSettings.popTag();
         }
         mlSettings.popTag();
@@ -99,7 +107,9 @@ void MachineLearning::addDataToXML(vector<trainingExample> examples, string titl
 
 void MachineLearning::saveDataToXML(){
     mlSettings.clear();
-    if (knnTrainingEMG.size() > 0) addDataToXML(knnTrainingEMG, "knnEMG");
+    
+    if (knnTrainingEMG.size() > 0)
+        addDataToXML(knnTrainingEMG, "knnEMG");
     
     for (int i = 0; i < TOTALSCENES; i++){
          if (nnAllTrainingSets[i].size() > 0)
@@ -117,56 +127,81 @@ void MachineLearning::loadDataFromXML(){
     }
     
     if( mlSettings.loadFile(fileName + ".xml") ){
-        if (mlSettings.getNumTags("knnemg") > 0) {
-            cout << "knnEMG " + ofToString( mlSettings.getNumTags("knnemg") )<< endl;
+        if (mlSettings.getNumTags("knnEMG") > 0) {
             dataParseXML("knnEMG", knnTrainingEMG);
         }
         
         for (int i = 0; i < TOTALSCENES; i++){
-            if (mlSettings.getNumTags("nnEmg_" + ofToString(i)) > 0){
-                cout << "nnEmg_ " + ofToString(i) + " " + ofToString( mlSettings.getNumTags("knnemg") )<< endl;
-                dataParseXML("nnEMG_"+ ofToString(i), nnAllTrainingSets[i]);
+            if (mlSettings.getNumTags("nnEMG_" + ofToString(i)) > 0){
+                dataParseXML("nnEMG_" + ofToString(i), nnAllTrainingSets[i]);
             }
         }
+        
     } else {
-        ofLogError("Position file did not load!");
+        ofLogError("File did not load!");
     }
 }
 
 //Reference: http://openframeworks.cc/documentation/ofxXmlSettings/ofxXmlSettings/
+
 void MachineLearning::dataParseXML(string searchTerm, vector<trainingExample> &trainingVec){
     mlSettings.pushTag(searchTerm);
-    int numData = mlSettings.getNumTags("example");
-    for(int i = 0; i < numData; i++){
+    int numExTags = mlSettings.getNumTags("example");
+    for(int i = 0; i < numExTags; i++){
+        
         mlSettings.pushTag("example", i);
+        
         int inputNum = mlSettings.getNumTags("input");
+        
         trainingExample example;
+       
         for (int j = 0; j < inputNum; j++ ){
-             example.input.push_back(mlSettings.getValue(searchTerm + ":input_" + ofToString(j),0, j));
+             example.input.push_back(mlSettings.getValue("input", j));
         }
-        example.output.push_back(mlSettings.getValue("label", 0, 0));
-
+        
+        if (searchTerm == "nnEMG_" + ofToString(sceneNum)){
+            int numOutputs = mlSettings.getNumTags("output");
+            
+            for (int k = 0; k < numOutputs; k++){
+                example.output.push_back(mlSettings.getValue("output",double(0.0), k));
+                cout << mlSettings.getValue("output", double(0.0), k) << endl;
+            }
+        } else {
+            example.output.push_back(mlSettings.getValue("label", 0, 0));
+        }
+        
         trainingVec.push_back(example);
+    
         mlSettings.popTag();
     }
     mlSettings.popTag(); //pop position
 }
 
+
+bool MachineLearning::segmentLimit(vector<double> inputCheck, float threshold) {
+    
+    for (int i = 0; i < inputCheck.size(); i++){
+        if (inputCheck[i] > threshold){
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return false;
+}
+
 void MachineLearning::update(MyoManager &myo) {
     for (int i = 0; i < myo.feature.size(); i++){
-        Feature feature = myo.feature[i];
-        
-        if(ofGetFrameNum() % 5 == 0){
-            
+        if(ofGetFrameNum() % 2 == 0){
+          Feature feature = myo.feature[i];
             //Collect data from the myo ready for input into the mahcine learning algorithms
-            vector<double> emgFeature, gyroFeature;
-            vector<double> emgBayes;
-            vector<double> emgBayesQuat;
+            vector<double> emgRMS, emgSTD, emgRMSRatio, emgSTDRatio, emgBayesRatio, gyroFeature;
             
-            emgFeature = feature.emg.rms;
-            
-            emgBayes = feature.emg.bayesRMS;
-            
+            emgRMS = feature.emg.rms;
+            emgSTD = feature.emg.stdDev;
+            emgSTDRatio = feature.emg.stdRatio;
+            emgRMSRatio = feature.emg.rmsRatio;
+            emgBayesRatio = feature.emg.bayesRatio;
             gyroFeature = {
                 feature.acc.gyro[0],
                 feature.acc.gyro[1],
@@ -182,7 +217,7 @@ void MachineLearning::update(MyoManager &myo) {
                 
                 //Record EMG
                 trainingExample tempEMGExample;
-                tempEMGExample.input = emgBayes;
+                tempEMGExample.input = emgBayesRatio;
                 tempEMGExample.output = { (double)knnGestureNum };
                 knnTrainingEMG.push_back(tempEMGExample);
                 
@@ -190,25 +225,29 @@ void MachineLearning::update(MyoManager &myo) {
                 bRunKNN = false;
             }
             
+            
             if (bCaptureXMM){
-                
-                //Following Implemtation from Tests folder on RapidMix API
-                xmmTempData.startRecording(ofToString(xmmGestureNum));
-                
+                if (bStartXMMRecording){
+                    //Following Implemtation from Tests folder on RapidMix API
+                    xmmTempData.startRecording(ofToString(xmmGestureNum));
+                    cout << "Recording Started : " << xmmGestureNum << endl;
+                }
+
                 vector<double> label = {(double)xmmGestureNum};
                 
+                //x y z gyro
                 xmmTempData.addElement(gyroFeature, label);
-                
-                xmmTempData.stopRecording();
-
+                cout << xmmTempData.trainingSet.size() << endl;
+                bStartXMMRecording = false;
                 bRunXMM = false;
+                xmmTempData.stopRecording();
             }
             
             if (bCaptureReg){
                 bRunReg = false;
                 int i = sceneNum;
                 
-                nnAllTempExamples[i].input = { emgBayes };
+                nnAllTempExamples[i].input = { emgSTDRatio };
                 nnAllTempExamples[i].output = {
                     mlGui->getSlider("Ableton Param 1")->getValue(),
                     mlGui->getSlider("Ableton Param 2")->getValue(),
@@ -234,67 +273,43 @@ void MachineLearning::update(MyoManager &myo) {
             }
             
             if (bTrainXMM) {
-                bTrainXMM = false;
-//                if(xmmTempData.trainingSet.size() > 0) {
-                    //Training Phase for NN Regression
+                //Training Phase for NN Regression
                 xmmClassifierEMG.train(xmmTempData);
-//                xmmTempData.trainingSet.clear();
                 bRunXMM = true;
-//                }
+                bTrainXMM = false;
+                cout << "XMM Trained!" << endl;
             }
             
             if (bTrainReg) {
                 //Training Phase for NN Regression
                 if(nnAllTrainingSets[sceneNum].size() > 0){
-                    nnAllReg[sceneNum].train(nnAllTrainingSets[sceneNum]);
+                    nnAllReg[i].train(nnAllTrainingSets[sceneNum]);
                     cout << "Regression_" + ofToString(sceneNum) + " Trained" << endl;
-                    bTrainReg = false;
-                    bRunReg = true;
                 } else {
                     cout << "Regression_" + ofToString(sceneNum) + " Not Trained" << endl;
                 }
+                bTrainReg = false;
+                bRunReg = true;
             }
 
             //
             // :: Run Phase ::
             //
             if (bRunKNN) {
-                int classLabel = knnClassifierEMG.run({emgBayes})[0];
-                colorKNN = colors[classLabel];
+                //Quick and dirty segmentation will make this user friendly at some point
+//                if(segmentLimit(emgBayesRatio, 0.2)){
+                    int classLabel = knnClassifierEMG.run({emgBayesRatio})[0];
+                    colorKNN = colors[classLabel];
+//                }
             }
             
             if (bRunXMM) {
-                
-//                vector<rapidmix::rapidStream> xmmRS;
-//                for (int i = 0; i < 3; i ++){
-//                    rapidStream<double> rs((int)xmmTempData.trainingSet.size());
-//                    xmmRS.push_back(rs);
-//                    xmmRS[i].pushToWindow(accFeature[i]);
-//                }
-//                
-//                
-//                vector<double> progress(xmmTempData.trainingSet.size());
-////                cout << progress.size() << endl;
-//                for (int i = 0; i < progress.size(); i++) {
-//                    
-////                    xmmRS.pushToWindow(accFeature[0]);
-//                    myXmmPhrase.push_back({xmmRS[0]});
-//
-////                    // we take the second value because run() returns
-////                    // [ likelihood_1, timeProgression_1, .... likelihood_n, timeProgression_n ]
-//                    progress[i] = xmmClassifierEMG.run(myXmmPhrase[i])[1];
-//                    cout << "Progress_" + ofToString(i) << " : "  << progress.size() << endl;
-//                }
-//                
-//                myXmmPhrase.clear();
-//                std::vector<double> sortedProgress = progress;
-//                std::sort(sortedProgress.begin(), sortedProgress.end());
-                
+                cout << ofToString(xmmClassifierEMG.run(gyroFeature)) << endl;
             }
             
             if (bRunReg) {
                 if (nnAllTrainingSets[sceneNum].size() > 0){
-                    regressVals = nnAllReg[sceneNum].run({ emgBayes });
+                    regressVals = nnAllReg[sceneNum].run({ emgSTDRatio });
                     //For Visual Purposes
                     mlGui->getSlider("Ableton Param 1")->setValue(regressVals[0]);
                     mlGui->getSlider("Ableton Param 2")->setValue(regressVals[1]);
@@ -312,7 +327,7 @@ void MachineLearning::draw() {
     
     //KNN Indicator
     ofSetColor(255);
-    ofDrawBitmapString("KNN Examples EMG: " + ofToString(knnTrainingEMG.size()), 50, 350);
+    ofDrawBitmapString("KNN Examples (EMG): " + ofToString(knnTrainingEMG.size()), 50, 350);
 
     ofPushStyle();
     ofSetColor(colorKNN);
@@ -322,13 +337,13 @@ void MachineLearning::draw() {
     ofDrawBitmapString("Class: " + ofToString(knnClassLabelEMG), 255, 365);
     ofPopStyle();
     
-    //DTW Indicator
+    //XMM Indicator
     ofSetColor(255);
     ofDrawBitmapString("XMM Training Data: " + ofToString(xmmTempData.trainingSet.size()), 50, 460);
-    ofDrawBitmapString("XMM Phrase Size: " + ofToString(xmmPhrases.size()), 50, 480);
     
+    //NN Indicator
     for (int i = 0; i < TOTALSCENES; i++){
-        if (sceneNum == i){
+        if (i == sceneNum){
             ofDrawBitmapString("NN_" + ofToString(i) + " Set Num: " + ofToString(nnAllTrainingSets[i].size()), 50, 570);
         }
     }
@@ -347,7 +362,6 @@ void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
     if (guiLabel == "Clear XMM"){
         bRunXMM = false;
         bCaptureXMM = false;
-        xmmPhrases.clear();
         xmmClassifierEMG.reset();
         xmmTempData.trainingSet.clear();
     }
@@ -397,21 +411,23 @@ void MachineLearning::onMatrixEvent(ofxDatGuiMatrixEvent e){
     if (guiLabel == "KNN Record"){
         knnGestureNum = whichButton;
         bCaptureKNN = e.enabled;
+        bRunKNN = false;
     } else if (guiLabel == "XMM Record"){
         xmmGestureNum = whichButton;
         bCaptureXMM = e.enabled;
+        bStartXMMRecording = true;
     } else if (guiLabel == "Scene"){
         bRunReg = false;
         sceneNum = whichButton;
 
+        //For GUI Feedback
         for(int i =0; i < TOTALSCENES; i++){
-            if (i == sceneNum){
+            if ( i == sceneNum){
                 mlGui->getMatrix("Scene")->getChildAt(i)->setSelected(true);
             } else {
                 mlGui->getMatrix("Scene")->getChildAt(i)->setSelected(false);
             }
         }
-        
         bRunReg = true;
     }
 }
@@ -421,7 +437,11 @@ void MachineLearning::onTextInputEvent(ofxDatGuiTextInputEvent e)
     string guiLabel = e.target->getLabel();
     
     if (guiLabel == "Filename") {
-        fileName = e.target->getText();
-        transform(fileName.begin(), fileName.end(), fileName.begin(), ::tolower);
+        
+        //Make sure the filename isnt affected by case sensitivity.
+        string fName = e.target->getText();
+        transform(fName.begin(), fName.end(), fName.begin(), ::tolower);
+        fileName = fName; //A little bit of error handling
+        
     }
 }

@@ -20,7 +20,6 @@ MyoManager::MyoManager()
     myoGui->addHeader(" Myo Functions ");
     myoGui->addBreak()->setHeight(10.0f);
     myoGui->addLabel(" :: Myo Parameters :: ");
-    myoGui->addButton("Set Myo Origin");
     myoGui->addSlider("Lower Threshold", 0, 100);
     myoGui->addSlider("Higher Threshold", 0, 100);
     //    myoGui->addSlider("WindowSize", 1, 60);
@@ -53,8 +52,8 @@ MyoManager::MyoManager()
     
     //Load Myo Model
     model.loadModel("./MyoModel/myo.obj");
-    model.setPosition(ofGetWidth() * 0.25, ofGetHeight() - (ofGetHeight() * 0.25), 0);
-    model.setScale(0.2,0.2,0.2);
+    model.setPosition(ofGetWidth() * 0.25, ofGetHeight() - (ofGetHeight() * 0.4), 0);
+    model.setScale(0.25,0.25,0.25);
     
     light.enable();
 }
@@ -79,6 +78,7 @@ void MyoManager::update(){
 
         feature[i].acc.raw = myo.getDevices()[i]->getAccel();
         feature[i].acc.quat = myo.getDevices()[i]->getQuaternion();
+        feature[i].acc.gyro = myo.getDevices()[i]->getGyro();
 
         for( int j = 0; j < 3; j++){
             //Add accellerometer data to the rapidStream
@@ -106,7 +106,10 @@ void MyoManager::update(){
             feature[i].emg.stdDev[j] = emgRawStreams[j]->standardDeviation();
             feature[i].emg.min[j] = emgRawStreams[j]->minimum();
             feature[i].emg.max[j] = emgRawStreams[j]->maximum();
-            feature[i].emg.bayesRMS[j] = emgRawStreams[j]->bayesFilter( feature[i].emg.rms[j] );
+            
+            //Insert above statistical valus here
+            feature[i].emg.bayes[j] =
+                emgRawStreams[j]->bayesFilter( feature[i].emg.stdDev[j] );
         }
 
         /*
@@ -132,7 +135,8 @@ void MyoManager::update(){
             for (int k = 0; k < j; k++){
                 den = num + k + 1;
                 feature[i].emg.rmsRatio[index] = feature[i].emg.rms[num] / feature[i].emg.rms[den];
-                feature[i].emg.bayesRatio[index] = feature[i].emg.bayesRMS[num] / feature[i].emg.bayesRMS[den];
+                feature[i].emg.bayesRatio[index] = feature[i].emg.bayes[num] / feature[i].emg.bayes[den];
+                feature[i].emg.stdRatio[index] = feature[i].emg.stdDev[num] / feature[i].emg.stdDev[den];
                 index++;
             }
             num++;
@@ -155,13 +159,18 @@ void MyoManager::drawGui(ofVec2f pos){
     for ( int i = 0; i < myo.getDevices().size(); i++ ) {
         ofDrawBitmapString("Myo: " + ofToString(myo.getDevices()[i]->getId()), pos.x, pos.y + 20);
         
-        drawGraph(ofVec2f(pos.x, pos.y + 50),  "1) RMS", feature[i].emg.rms, 0, 127);
-        drawGraph(ofVec2f(pos.x, pos.y + 150), "2) BayesFitler", feature[i].emg.bayesRMS, 0, 1);
-        drawGraph(ofVec2f(pos.x + 200, pos.y + 50), "3) RMSRatio", feature[i].emg.rmsRatio, 0, 50);
-        drawGraph(ofVec2f(pos.x + 350, pos.y + 50), "4) BayesRatio", feature[i].emg.bayesRatio, 0, 10);
-        drawGraph(ofVec2f(pos.x + 200, pos.y + 250), "5) RMSStDev", feature[i].emg.stdDev, 0, 100);
-        drawGraph(ofVec2f(pos.x, pos.y + 250), "6) Acc", feature[i].acc.raw, -1, 1);
-        drawGraph(ofVec2f(pos.x + 350, pos.y + 250), "6) AccFODRMS", feature[i].acc.fodRMS, -1, 1);
+        drawGraph(ofVec2f(pos.x, pos.y + 50),  "RMS", feature[i].emg.rms, 0, 127);
+        drawGraph(ofVec2f(pos.x, pos.y + 150), "RMSRatio", feature[i].emg.rmsRatio, 0, 50);
+        
+        drawGraph(ofVec2f(pos.x + 150, pos.y + 50), "Bayes", feature[i].emg.bayes, 0, 1);
+        drawGraph(ofVec2f(pos.x + 150, pos.y + 150), "BayesRatio", feature[i].emg.bayesRatio, 0, 10);
+        
+        drawGraph(ofVec2f(pos.x + 300, pos.y + 50), "Std Dev", feature[i].emg.stdDev, 0, 100);
+        drawGraph(ofVec2f(pos.x + 300, pos.y + 150), "Std Dev Ratio", feature[i].emg.stdRatio, 0, 100);
+        
+        
+//        drawGraph(ofVec2f(pos.x, pos.y + 250), "Acc", feature[i].acc.raw, -1, 1);
+//        drawGraph(ofVec2f(pos.x + 350, pos.y + 250), "AccFODRMS", feature[i].acc.fodRMS, -1, 1);
         
         drawModel(ofVec2f(pos.x, pos.y + 50), i);
     }
@@ -181,14 +190,22 @@ void MyoManager::drawModel(ofVec2f pos, int id){
         
         ofPushMatrix();
         {
-           
             ofTranslate( pos.x + model.getPosition().x, pos.y + model.getPosition().y);
-            ofRotate(ofRadToDeg(feature[id].acc.quat.x()), 0, 0, 1);
-            ofRotate(ofRadToDeg(feature[id].acc.quat.y()), 1, 0, 0);
-            ofRotate(ofRadToDeg(feature[id].acc.quat.z()), 0, 1, 0);
-            ofDrawAxis(20);
-            ofDrawRotationAxes(20);
-            ofTranslate(-model.getPosition().x, -model.getPosition().y);
+            ofRotate(180, 0, 1, 0);
+            ofRotate(ofRadToDeg(feature[id].acc.pitch), 1, 0, 0);
+            ofRotate(ofRadToDeg(feature[id].acc.yaw), 0, 1, 0);
+            ofRotate(ofRadToDeg(feature[id].acc.roll), 0, 0, 1);
+            
+            ofPushMatrix();
+            {
+                ofRotate(180, 0, 0, 1);
+                ofSetLineWidth(5);
+                ofDrawAxis(60);
+            }
+            ofPopMatrix();
+            
+            //Move the model back a touch
+            ofTranslate(-model.getPosition().x, -model.getPosition().y, -50);
             model.drawFaces();
         }
         ofPopMatrix();
@@ -274,6 +291,8 @@ void MyoManager::onSliderEvent(ofxDatGuiSliderEvent e){
         }
     }
     
+    //Still to implement a dynmically changing windowsize for easy user adjustment?
+    //This requires editing of RapidMix API
     
 //    if (guiLabel == "WindowSize") {
 //        for (int i = 0; i < emgStreams.size(); i++){

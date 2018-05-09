@@ -23,16 +23,10 @@ DMXController::DMXController(){
     lights.push_back(profiles[1]);
 }
 
-void DMXController::update(){
-//    profiles[0]->setColor(ofVec4f(0,0,0,0));
-//    profiles[1]->setColor(ofVec4f(0,0,0,0));
-    
-    dynamic_cast<ProfilePlus*>(profiles[0])->setUV(255);
-    dynamic_cast<ProfilePlus*>(profiles[1])->setUV(255);
-    
-    dynamic_cast<ProfilePlus*>(profiles[0])->setColor(ofVec4f(255, 0, 0, 255));
-    dynamic_cast<ProfilePlus*>(profiles[1])->setColor(ofVec4f(0, 255, 0, 255));
-    
+void DMXController::update(MachineLearning &interactiveML){
+    profiles[0]->setColor(ofVec4f(0,0,0,0));
+    profiles[1]->setColor(ofVec4f(0,0,0,0));
+
     for (auto light : lights){
         light->update();
     }
@@ -41,7 +35,7 @@ void DMXController::update(){
 }
 
 void DMXController::draw(){
-    for (auto light : lights){
-        light->update();
+    for (int i = 0 ; i < lights.size(); i++){
+        lights[i]->display(ofVec2f(500 + (100 * i), ofGetHieght() - 100);
     }
 }

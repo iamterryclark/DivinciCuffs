@@ -3,7 +3,7 @@
 //  BioPerformanceTool
 //
 //  Created by Terry Clark on 06/03/2018.
-//
+//dd
 
 #pragma once
 
@@ -30,6 +30,7 @@ public:
     void saveDataToXML();
     void loadDataFromXML();
     void dataParseXML(string searchTerm,vector<trainingExample> &trainingVec);
+    bool segmentLimit(vector<double> inputCheck, float threshold);
 
     //Gui Events
     void onButtonEvent(ofxDatGuiButtonEvent e);
@@ -55,9 +56,9 @@ public:
     //XMM Recognition
     rapidmix::xmmTemporalClassification xmmClassifierEMG;
     rapidmix::trainingData xmmTempData;
-    vector<double> xmmPhrases;
-    bool bCaptureXMM, bTrainXMM, bRunXMM;
+    bool bCaptureXMM, bTrainXMM, bRunXMM, bStartXMMRecording;
     int xmmGestureNum;
+    
     
     //Regression
     vector<regression> nnAllReg;
