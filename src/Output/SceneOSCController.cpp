@@ -39,7 +39,15 @@ void SceneOSCController::update(){
             
             switch(ml->sceneNum){
                 case 2:
-                   
+                    paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
+                    
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
+                    
+                    break;
+                case 3:
                     paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
                     
                     streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
@@ -49,17 +57,40 @@ void SceneOSCController::update(){
                     
                     break;
                 case 4:
-                    paramValues[0] = ofMap(paramValues[0], 0, 1, 0, 127);
-                    paramValues[1] = ofMap(paramValues[1], 0, 1, 0, 127);
+                    paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
                     
-                    streamToInstrumentDevice("/live/device", 1, 0, 5, paramValues[0]);
-                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
                     break;
-                case 8:
+                case 5:
+                    paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
+                    
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
+                    break;
+                case 6:
                     streamToInstrumentDevice("/live/device", 3, 0, 159, paramValues[0]);
                     streamToInstrumentDevice("/live/device", 3, 0, 115, paramValues[1]);
                     streamToInstrumentDevice("/live/device", 3, 0, 117, paramValues[2]);
                     streamToInstrumentDevice("/live/device", 3, 0, 138, paramValues[3]);
+                    break;
+                case 7:
+                    streamToInstrumentDevice("/live/device", 3, 0, 159, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 115, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 117, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 138, paramValues[3]);
+                case 8:
+                    paramValues[0] = ofMap(paramValues[0], 0 , 1, 0 ,127);
+                    paramValues[1] = ofMap(paramValues[1], 0 , 1, 0 ,127);
+                    paramValues[2] = ofMap(paramValues[2], 0 , 1, 0 ,127);
+                    
+                    streamToInstrumentDevice("/live/device", 4, 0, 1, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 4, 0, 2, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 4, 0, 4, paramValues[2]);
                     break;
                 case 9:
                     paramValues[0] = ofMap(paramValues[0], 0 , 1, 0 ,127);
@@ -71,7 +102,6 @@ void SceneOSCController::update(){
                     streamToInstrumentDevice("/live/device", 4, 0, 2, paramValues[1]);
                     streamToInstrumentDevice("/live/device", 4, 0, 4, paramValues[2]);
                     streamToInstrumentDevice("/live/device", 4, 0, 6, paramValues[3]);
-                    break;
                 default:
                     
                     break;
@@ -109,18 +139,51 @@ void SceneOSCController::update(){
                     streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
                     
                     break;
-                case 4:
-                    paramValues[0] = ofMap(paramValues[0], 0, 1, 0, 127);
-                    paramValues[1] = ofMap(paramValues[1], 0, 1, 0, 127);
+                case 3:
                     
-                    streamToInstrumentDevice("/live/device", 2, 1, 5, paramValues[0]);
-                    streamToInstrumentDevice("/live/device", 2, 1, 6, paramValues[1]);
+                    paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
+                    
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
+                    
                     break;
-                case 8:
+                case 4:
+                    paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
+                    
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
+                    break;
+                case 5:
+                    paramValues[3] = ofMap(paramValues[3], 0 , 1, 0, 20);
+                    
+                    streamToInstrumentDevice("/live/device", 1, 0, 2, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 3, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 6, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 1, 0, 13, paramValues[3]);
+                    break;
+                case 6:
                     streamToInstrumentDevice("/live/device", 3, 0, 159, paramValues[0]);
                     streamToInstrumentDevice("/live/device", 3, 0, 115, paramValues[1]);
                     streamToInstrumentDevice("/live/device", 3, 0, 117, paramValues[2]);
                     streamToInstrumentDevice("/live/device", 3, 0, 138, paramValues[3]);
+                    break;
+                case 7:
+                    streamToInstrumentDevice("/live/device", 3, 0, 159, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 115, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 117, paramValues[2]);
+                    streamToInstrumentDevice("/live/device", 3, 0, 138, paramValues[3]);
+                case 8:
+                    paramValues[0] = ofMap(paramValues[0], 0 , 1, 0 ,127);
+                    paramValues[1] = ofMap(paramValues[1], 0 , 1, 0 ,127);
+                    paramValues[2] = ofMap(paramValues[2], 0 , 1, 0 ,127);
+                    
+                    streamToInstrumentDevice("/live/device", 4, 0, 1, paramValues[0]);
+                    streamToInstrumentDevice("/live/device", 4, 0, 2, paramValues[1]);
+                    streamToInstrumentDevice("/live/device", 4, 0, 4, paramValues[2]);
                     break;
                 case 9:
                     paramValues[0] = ofMap(paramValues[0], 0 , 1, 0 ,127);
@@ -130,7 +193,6 @@ void SceneOSCController::update(){
                     streamToInstrumentDevice("/live/device", 4, 0, 1, paramValues[0]);
                     streamToInstrumentDevice("/live/device", 4, 0, 2, paramValues[1]);
                     streamToInstrumentDevice("/live/device", 4, 0, 4, paramValues[2]);
-                    break;
                 default:
                     
                     break;
@@ -153,9 +215,9 @@ void SceneOSCController::draw(ofVec2f pos){
     ofSetColor(255);
     ofDrawBitmapString("Ablton OSC", pos.x, pos.y);
     ofDrawBitmapString("Scene " + ofToString(ml->sceneNum), pos.x, pos.y + 20);
-    ofDrawBitmapString("Track " + ofToString(track), pos.x, pos.y + 20);
-    ofDrawBitmapString("Device " + ofToString(device), pos.x, pos.y + 40);
-    ofDrawBitmapString("Param " + ofToString(param), pos.x, pos.y + 60);
+    ofDrawBitmapString("Track " + ofToString(track), pos.x, pos.y + 40);
+    ofDrawBitmapString("Device " + ofToString(device), pos.x, pos.y + 60);
+    ofDrawBitmapString("Param " + ofToString(param), pos.x, pos.y + 80);
     
     ofDrawBitmapString(paramOut, pos.x, pos.y + 80 );
     dmxControl.draw();
@@ -217,7 +279,7 @@ void SceneOSCController::keyPressed(int key){
 //        case 'q': prevScene(); break;
 //        case ' ': playScene(); break;
 //        case 's': stopScene(); break;
-            
+        case 's': stopScene(ml->sceneNum); break;
         case 't': track++; break;
         case 'g': track--; break;
         case 'd': device++; break;

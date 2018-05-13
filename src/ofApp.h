@@ -7,6 +7,7 @@
 #include "MachineLearning.hpp"
 #include "SceneOSCController.hpp"
 #include "DMXController.hpp"
+#include "ofxCenteredTrueTypeFont.h"
 
 class ofApp : public ofBaseApp{
 
@@ -31,5 +32,8 @@ class ofApp : public ofBaseApp{
     MachineLearning *interactiveML;
     SceneOSCController *sceneControl;
     DMXController dmxControl;
+    
+    ofImage image;
+    ofxCenteredTrueTypeFont ttf;
     
 };

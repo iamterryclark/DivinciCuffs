@@ -212,16 +212,22 @@ void MachineLearning::update() {
           Feature feature = myo->feature[i];
             
             //Collect data from the myo ready for input into the mahcine learning algorithms
-            vector<double> emgSTD, emgSTDRatio, emgRMSRatio, gyroFeature, PitYawRol;
+            vector<double> emgSTD, emgSTDRatio, emgRMSRatio, gyro, PitYawRol, quat;
            
             //Testing all sorts of inputs
             emgSTD = feature.emg.stdDev;
             emgSTDRatio = feature.emg.stdRatio;
             emgRMSRatio = feature.emg.rmsRatio;
-            gyroFeature = {
+            gyro = {
                 feature.acc.gyro[0],
                 feature.acc.gyro[1],
                 feature.acc.gyro[2],
+            };
+            quat = {
+                feature.acc.quat.x(),
+                feature.acc.quat.y(),
+                feature.acc.quat.z(),
+                feature.acc.quat.w()
             };
             PitYawRol = {
                 feature.acc.pitch,
@@ -264,7 +270,7 @@ void MachineLearning::update() {
 
                 vector<double> label = {(double)xmmGestureNum};
                 //x y z gyro
-                xmmTempData.addElement(gyroFeature, label);
+                xmmTempData.addElement(gyro, label);
 //                bStartXMMRecording = false;
                 bRunXMM = false;
 //                xmmTempData.stopRecording();
@@ -278,11 +284,21 @@ void MachineLearning::update() {
                 switch(sceneNum){
                     case 2:
                         inputVec = emgSTDRatio;
+                        inputVec.insert( inputVec.end(), quat.begin(), quat.end() );
+                        break;
+                    case 3:
+                        inputVec = emgSTDRatio;
                         break;
                     case 4:
                         inputVec = PitYawRol;
                         break;
-                    case 8:
+                    case 5:
+                        inputVec = PitYawRol;
+                        break;
+                    case 6:
+                        inputVec = PitYawRol;
+                        break;
+                    case 7:
                         inputVec = PitYawRol;
                         break;
                     case 9:
@@ -295,7 +311,6 @@ void MachineLearning::update() {
         
                 nnAllTempExamples[sceneNum].input = inputVec;
         
-                
                 //Get values from the sliders to set as outputs
                 nnAllTempExamples[sceneNum].output = {
                     mlGui->getSlider("Ableton Param 1")->getValue(),
@@ -350,12 +365,16 @@ void MachineLearning::update() {
             // :: Run Phase ::
             
             if (bRunKNN) {
-                //Quick and dirty segmentation  will make this user friendly at some point
+                //Quick and dirty segmentation
                 if(segmentLimit(emgSTD)){
+                    
+                    //Capture class values for both emg and acc
                     int classLabelEmg = knnClassifierEMG.run({emgSTDRatio})[0];
                     int classLabelAcc = knnClassifierAcc.run({PitYawRol})[0];
                     
+                    //If they are both the same class
                     if (classLabelEmg == classLabelAcc){
+                        //Output the class
                         colorKNN = colors[classLabelEmg];
                     } else {
                         colorKNN = ofColor(0);
@@ -373,11 +392,21 @@ void MachineLearning::update() {
                     switch(sceneNum){
                         case 2:
                             currentInput = emgSTDRatio;
+                            currentInput.insert( currentInput.end(), quat.begin(), quat.end() );
+                            break;
+                        case 3:
+                            currentInput = emgSTDRatio;
                             break;
                         case 4:
                             currentInput = PitYawRol;
                             break;
-                        case 8:
+                        case 5:
+                            currentInput = PitYawRol;
+                            break;
+                        case 6:
+                            currentInput = PitYawRol;
+                            break;
+                        case 7:
                             currentInput = PitYawRol;
                             break;
                         case 9:
@@ -426,12 +455,9 @@ void MachineLearning::draw() {
     ofDrawBitmapString("Class: " + ofToString(knnClassLabelEMG), 255, 365);
     ofPopStyle();
 
-    
     //XMM Indicator
     ofSetColor(255);
     ofDrawBitmapString("XMM Training Data: " + ofToString(xmmTempData.trainingSet.size()), 50, 460);
-    
-    
     
     //NN Indicator
     for (int i = 0; i < TOTALSCENES; i++){
@@ -466,8 +492,12 @@ void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
         
         for (int i = 0; i < TOTALSCENES; i++){
             nnAllTrainingSets[i].clear();
-//            nnAllReg[i].reset();
+            nnAllReg[i].reset();
+            nnAllReg[i].setNumHiddenLayers(1);
+            nnAllReg[i].setNumHiddenNodes(3);
+            nnAllReg[i].setNumEpochs(200);
         }
+        
     }
     
     if (guiLabel == "KNN Train & Run") {
@@ -513,9 +543,12 @@ void MachineLearning::onMatrixEvent(ofxDatGuiMatrixEvent e){
         bStartXMMRecording = true;
     } else if (guiLabel == "Scene"){
         bRunReg = false;
+        
         sceneNum = whichButton;
+        
         oneShotTrigger = true;
         playSceneTrigger();
+        
         //For GUI Feedback
         for(int i =0; i < TOTALSCENES; i++){
             if ( i == sceneNum){
@@ -524,6 +557,7 @@ void MachineLearning::onMatrixEvent(ofxDatGuiMatrixEvent e){
                 mlGui->getMatrix("Scene")->getChildAt(i)->setSelected(false);
             }
         }
+        
         bRunReg = true;
     }
 }

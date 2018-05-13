@@ -13,8 +13,6 @@
 #include "DMXController.hpp"
 #include "MyoManager.hpp"
 
-
-
 //#define HOST "172.17.0.189"
 #define HOST "localhost"
 #define PORTOUT 9005

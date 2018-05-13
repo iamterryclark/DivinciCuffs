@@ -17,7 +17,7 @@
 #include "MyoManager.hpp"
 
 //Just change this number to total scenes in Ableton, everything will format
-#define TOTALSCENES 10
+#define TOTALSCENES 11
 
 class MachineLearning {
 private:
