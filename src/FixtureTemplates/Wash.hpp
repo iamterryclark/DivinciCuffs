@@ -18,7 +18,7 @@ public:
     void setColor(ofColor col) { color.set(col); }
     void setPosition(ofVec2f pos) { position.set(pos); }
     void display(){
-        ofSetColor(155, 100, 200);
+        ofSetColor(color);
         ofDrawCircle(position.x, position.y, 30,30);
     }
 };

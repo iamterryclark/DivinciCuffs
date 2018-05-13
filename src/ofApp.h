@@ -27,9 +27,9 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
     
-    MyoManager myoManager;
-    MachineLearning interactiveML;
-    SceneOSCController oscControl;
+    MyoManager *myoManager;
+    MachineLearning *interactiveML;
+    SceneOSCController *sceneControl;
     DMXController dmxControl;
     
 };

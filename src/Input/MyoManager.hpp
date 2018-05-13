@@ -23,11 +23,10 @@
 class MyoManager {
 private:
     ofxMyo::Myo myo;
-    
 public:
     MyoManager();
     ~MyoManager();
-    
+  
     void update();
     void draw();
     void drawGui(ofVec2f pos);

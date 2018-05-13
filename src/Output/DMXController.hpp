@@ -10,13 +10,13 @@
 #include "ofMain.h"
 #include "ofxDmx.h"
 #include "MH2.hpp"
-#include "MachineLearning.hpp"
+
 
 class DMXController{
 public:
     DMXController();
     ~DMXController();
-    void update(MachineLearning &ml);
+    void update(float pVal1, float pVal2, ofColor knnClass);
     void draw();
     //DMX object
     ofxDmx dmx;

@@ -7,8 +7,21 @@
 
 #include "MachineLearning.hpp"
 
-MachineLearning::MachineLearning()
+MachineLearning::MachineLearning(MyoManager *_myo) :
+myo(_myo)
 {
+    bCaptureKNN = false;
+    bCaptureReg = false;
+    bCaptureXMM = false;
+    
+    bTrainKNN = false;
+    bTrainReg = false;
+    bTrainXMM = false;
+    
+    bRunKNN = false;
+    bRunReg = false;
+    bRunXMM = false;
+    
     //Gui Setup
     mlGui = new ofxDatGui( ofxDatGuiAnchor::TOP_RIGHT );
     mlGui->setAssetPath(""); //this has to be done due to bug with gui
@@ -20,6 +33,7 @@ MachineLearning::MachineLearning()
     mlGui->addButton("Load Preset");
     mlGui->addBreak()->setHeight(10.0f);
     mlGui->addLabel(" :: Posture Recognition (KNN) :: ");
+    mlGui->addSlider("Segment Threshold", 0, 100);
     mlGui->addMatrix("KNN Record", 7, true);
     mlGui->addButton("KNN Train & Run");
     mlGui->addButton("Clear KNN");
@@ -38,8 +52,8 @@ MachineLearning::MachineLearning()
     mlGui->addSlider("Ableton Param 2", 0, 1);
     mlGui->addSlider("Ableton Param 3", 0, 1);
     mlGui->addSlider("Ableton Param 4", 0, 1);
-    mlGui->addSlider("Ableton Param 5", 0, 1);
-    mlGui->addSlider("Ableton Param 6", 0, 1);
+    mlGui->addSlider("DMX Param 1", 0, 1);
+    mlGui->addSlider("DMX Param 2", 0, 1);
     mlGui->addButton("Clear NN");
     
     mlGui->onButtonEvent(this, &MachineLearning::onButtonEvent);
@@ -91,9 +105,8 @@ void MachineLearning::addDataToXML(vector<trainingExample> examples, string titl
             
             //Seperate Process for Regression outputs
             if (title == "nnEMG_" + ofToString(sceneNum)){
-                for (int k = 0; k < examples[i].output.size(); k++){
-                    mlSettings.addValue("output", examples[i].output[k]);
-//                    cout << examples[i].output[k] << endl;
+                for (int j = 0; j < examples[i].output.size(); j++){
+                    mlSettings.addValue("output", (float)examples[i].output[j]);
                 }
             } else {
                 mlSettings.addValue("label", (int)examples[i].output[i]);
@@ -111,9 +124,13 @@ void MachineLearning::saveDataToXML(){
     if (knnTrainingEMG.size() > 0)
         addDataToXML(knnTrainingEMG, "knnEMG");
     
+    if (knnTrainingAcc.size() > 0)
+        addDataToXML(knnTrainingAcc, "knnAcc");
+    
     for (int i = 0; i < TOTALSCENES; i++){
-         if (nnAllTrainingSets[i].size() > 0)
+        if (nnAllTrainingSets[i].size() > 0){
              addDataToXML(nnAllTrainingSets[i], "nnEMG_" + ofToString(i));
+        }
     }
    
     mlSettings.save(fileName + ".xml");
@@ -121,21 +138,22 @@ void MachineLearning::saveDataToXML(){
 
 void MachineLearning::loadDataFromXML(){
     knnTrainingEMG.clear();
+    knnTrainingAcc.clear();
 
-    for (int i = 0; i < TOTALSCENES; i++){
+    for (int i = 0; i < TOTALSCENES; i++)
         nnAllTrainingSets[i].clear();
-    }
     
     if( mlSettings.loadFile(fileName + ".xml") ){
-        if (mlSettings.getNumTags("knnEMG") > 0) {
+        if (mlSettings.getNumTags("knnEMG") > 0)
             dataParseXML("knnEMG", knnTrainingEMG);
-        }
+
+        if (mlSettings.getNumTags("knnAcc") > 0)
+            dataParseXML("knnAcc", knnTrainingAcc);
         
-        for (int i = 0; i < TOTALSCENES; i++){
-            if (mlSettings.getNumTags("nnEMG_" + ofToString(i)) > 0){
+        for (int i = 0; i < TOTALSCENES; i++)
+            if (mlSettings.getNumTags("nnEMG_" + ofToString(i)) > 0)
                 dataParseXML("nnEMG_" + ofToString(i), nnAllTrainingSets[i]);
-            }
-        }
+
         
     } else {
         ofLogError("File did not load!");
@@ -163,7 +181,7 @@ void MachineLearning::dataParseXML(string searchTerm, vector<trainingExample> &t
             int numOutputs = mlSettings.getNumTags("output");
             
             for (int k = 0; k < numOutputs; k++){
-                example.output.push_back(mlSettings.getValue("output",double(0.0), k));
+                example.output.push_back(mlSettings.getValue("output", double(0.0), k));
                 cout << mlSettings.getValue("output", double(0.0), k) << endl;
             }
         } else {
@@ -178,34 +196,37 @@ void MachineLearning::dataParseXML(string searchTerm, vector<trainingExample> &t
 }
 
 
-bool MachineLearning::segmentLimit(vector<double> inputCheck, float threshold) {
-    
+bool MachineLearning::segmentLimit(vector<double> inputCheck) {
     for (int i = 0; i < inputCheck.size(); i++){
-        if (inputCheck[i] > threshold){
+        //Threshold is manipulated by slider.
+        if (inputCheck[i] > segmentThreshold){
             return true;
-        } else {
-            return false;
         }
     }
     return false;
 }
 
-void MachineLearning::update(MyoManager &myo) {
-    for (int i = 0; i < myo.feature.size(); i++){
+void MachineLearning::update() {
+    for (int i = 0; i < myo->feature.size(); i++){
         if(ofGetFrameNum() % 3 == 0){
-          Feature feature = myo.feature[i];
-            //Collect data from the myo ready for input into the mahcine learning algorithms
-            vector<double> emgRMS, emgSTD, emgRMSRatio, emgSTDRatio, emgBayesRatio, gyroFeature;
+          Feature feature = myo->feature[i];
             
-            emgRMS = feature.emg.rms;
+            //Collect data from the myo ready for input into the mahcine learning algorithms
+            vector<double> emgSTD, emgSTDRatio, emgRMSRatio, gyroFeature, PitYawRol;
+           
+            //Testing all sorts of inputs
             emgSTD = feature.emg.stdDev;
             emgSTDRatio = feature.emg.stdRatio;
             emgRMSRatio = feature.emg.rmsRatio;
-            emgBayesRatio = feature.emg.bayesRatio;
             gyroFeature = {
                 feature.acc.gyro[0],
                 feature.acc.gyro[1],
                 feature.acc.gyro[2],
+            };
+            PitYawRol = {
+                feature.acc.pitch,
+                feature.acc.yaw,
+                feature.acc.roll
             };
             
             //
@@ -215,58 +236,79 @@ void MachineLearning::update(MyoManager &myo) {
             if (bCaptureKNN){
                 
                 //Record EMG
-                trainingExample tempEMGExample;
-                tempEMGExample.input = emgBayesRatio;
-                tempEMGExample.output = { (double)knnGestureNum };
-                knnTrainingEMG.push_back(tempEMGExample);
+                trainingExample tempEMGExampleEmg;
+                tempEMGExampleEmg.input = emgSTDRatio;
+                tempEMGExampleEmg.output = { (double)knnGestureNum };
+                knnTrainingEMG.push_back(tempEMGExampleEmg);
+                
+                trainingExample tempEMGExampleAcc;
+                tempEMGExampleAcc.input = PitYawRol;
+                tempEMGExampleAcc.output = { (double)knnGestureNum };
+                knnTrainingAcc.push_back(tempEMGExampleAcc);
                 
                 //Do not run Classifer whilst recording
                 bRunKNN = false;
             }
             
             
+            //Currently this feature needs work in understanding the implementation. Still unresolved in the GDS also
             if (bCaptureXMM){
-                if (bStartXMMRecording){
-                    //Following Implemtation from Tests folder on RapidMix API
-                    xmmTempData.startRecording(ofToString(xmmGestureNum));
-                    cout << "Recording Started : " << xmmGestureNum << endl;
-                }
+//                //Run once before adding all elements to training Data
+//                if (bStartXMMRecording){
+//
+//                    //Following Implemtation from Tests folder on RapidMix API
+//                    xmmTempData.startRecording(ofToString(xmmGestureNum));
+//                    cout << "Recording Started : " << xmmGestureNum << endl;
+//                }
+                xmmTempData.startRecording(ofToString(xmmGestureNum));
 
                 vector<double> label = {(double)xmmGestureNum};
-                
                 //x y z gyro
                 xmmTempData.addElement(gyroFeature, label);
-                cout << xmmTempData.trainingSet.size() << endl;
-                bStartXMMRecording = false;
+//                bStartXMMRecording = false;
                 bRunXMM = false;
-                xmmTempData.stopRecording();
+//                xmmTempData.stopRecording();
             }
             
+            //Captureing Regression
             if (bCaptureReg){
                 bRunReg = false;
-                int i = sceneNum;
-                
-                switch(i){
-                    case 0:
-                        nnAllTempExamples[i].input = { emgSTDRatio };
+                vector<double> inputVec;
+                //Depending on scene number regression shall take different inputs
+                switch(sceneNum){
+                    case 2:
+                        inputVec = emgSTDRatio;
                         break;
-                        
-                    case 1:
-                        nnAllTempExamples[i].input = { gyroFeature };
+                    case 4:
+                        inputVec = PitYawRol;
                         break;
-                        
+                    case 8:
+                        inputVec = PitYawRol;
+                        break;
+                    case 9:
+                        inputVec = PitYawRol;
+                        break;
+                    default:
+                        inputVec = emgSTDRatio;
+                        break;
                 }
-                nnAllTempExamples[i].output = {
+        
+                nnAllTempExamples[sceneNum].input = inputVec;
+        
+                
+                //Get values from the sliders to set as outputs
+                nnAllTempExamples[sceneNum].output = {
                     mlGui->getSlider("Ableton Param 1")->getValue(),
                     mlGui->getSlider("Ableton Param 2")->getValue(),
                     mlGui->getSlider("Ableton Param 3")->getValue(),
                     mlGui->getSlider("Ableton Param 4")->getValue(),
-                    mlGui->getSlider("Ableton Param 5")->getValue(),
-                    mlGui->getSlider("Ableton Param 6")->getValue()
+                    mlGui->getSlider("DMX Param 1")->getValue(),
+                    mlGui->getSlider("DMX Param 2")->getValue()
                 };
-               
-            
-                nnAllTrainingSets[i].push_back(nnAllTempExamples[i]);
+                
+                //Push back all respective examples into the training sets
+                //ready to be trained
+                nnAllTrainingSets[sceneNum].push_back(nnAllTempExamples[sceneNum]);
             }
         
             //
@@ -274,11 +316,14 @@ void MachineLearning::update(MyoManager &myo) {
             //
         
             if (bTrainKNN) {
-                if(knnTrainingEMG.size() > 0) {
+                if(knnTrainingEMG.size() > 0)
                     knnClassifierEMG.train(knnTrainingEMG);
-                    bTrainKNN = false;
-                    bRunKNN = true;
-                }
+                
+                if (knnTrainingAcc.size() > 0)
+                    knnClassifierAcc.train(knnTrainingAcc);
+                
+                bTrainKNN = false;
+                bRunKNN = true;
             }
             
             if (bTrainXMM) {
@@ -292,7 +337,7 @@ void MachineLearning::update(MyoManager &myo) {
             if (bTrainReg) {
                 //Training Phase for NN Regression
                 if(nnAllTrainingSets[sceneNum].size() > 0){
-                    nnAllReg[i].train(nnAllTrainingSets[sceneNum]);
+                    nnAllReg[sceneNum].train(nnAllTrainingSets[sceneNum]);
                     cout << "Regression_" + ofToString(sceneNum) + " Trained" << endl;
                 } else {
                     cout << "Regression_" + ofToString(sceneNum) + " Not Trained" << endl;
@@ -303,50 +348,76 @@ void MachineLearning::update(MyoManager &myo) {
 
             //
             // :: Run Phase ::
-            //
+            
             if (bRunKNN) {
-                //Quick and dirty segmentation will make this user friendly at some point
-                if(segmentLimit(emgBayesRatio, myo.higherThresh)){
-                    cout << "Over Limit" << emgBayesRatio[3] << endl;
-                    int classLabel = knnClassifierEMG.run({emgBayesRatio})[0];
-                    colorKNN = colors[classLabel];
+                //Quick and dirty segmentation  will make this user friendly at some point
+                if(segmentLimit(emgSTD)){
+                    int classLabelEmg = knnClassifierEMG.run({emgSTDRatio})[0];
+                    int classLabelAcc = knnClassifierAcc.run({PitYawRol})[0];
+                    
+                    if (classLabelEmg == classLabelAcc){
+                        colorKNN = colors[classLabelEmg];
+                    } else {
+                        colorKNN = ofColor(0);
+                    }
                 }
             }
             
             if (bRunXMM) {
-                cout << ofToString(xmmClassifierEMG.run(gyroFeature)) << endl;
+//                cout << ofToString(xmmClassifierEMG.run(gyroFeature)) << endl;
             }
             
             if (bRunReg) {
                 if (nnAllTrainingSets[sceneNum].size() > 0){
+                    vector<double> currentInput;
                     switch(sceneNum){
-                        case 0:
-                            regressVals = nnAllReg[sceneNum].run({ emgSTDRatio });
+                        case 2:
+                            currentInput = emgSTDRatio;
                             break;
-                        case 1:
-                            regressVals = nnAllReg[sceneNum].run({ gyroFeature });
+                        case 4:
+                            currentInput = PitYawRol;
+                            break;
+                        case 8:
+                            currentInput = PitYawRol;
+                            break;
+                        case 9:
+                            currentInput = PitYawRol;
+                            break;
+                        default:
+                            currentInput = emgSTDRatio;
                             break;
                     }
+                    
+                    regressVals = nnAllReg[sceneNum].run( currentInput );
                     
                     //For Visual Purposes
                     mlGui->getSlider("Ableton Param 1")->setValue(regressVals[0]);
                     mlGui->getSlider("Ableton Param 2")->setValue(regressVals[1]);
                     mlGui->getSlider("Ableton Param 3")->setValue(regressVals[2]);
                     mlGui->getSlider("Ableton Param 4")->setValue(regressVals[3]);
-                    mlGui->getSlider("Ableton Param 5")->setValue(regressVals[4]);
-                    mlGui->getSlider("Ableton Param 6")->setValue(regressVals[5]);
+                    mlGui->getSlider("DMX Param 1")->setValue(regressVals[4]);
+                    mlGui->getSlider("DMX Param 2")->setValue(regressVals[5]);
                 }
             }
         }
     }
 }
 
+//Need to trigger this from sceneCotnrol
+bool MachineLearning::playSceneTrigger(){
+    if (oneShotTrigger){
+        return oneShotTrigger;
+    }
+    oneShotTrigger = false;
+    return oneShotTrigger;
+}
+
 void MachineLearning::draw() {
-    
     //KNN Indicator
     ofSetColor(255);
     ofDrawBitmapString("KNN Examples (EMG): " + ofToString(knnTrainingEMG.size()), 50, 350);
-
+    ofDrawBitmapString("KNN Examples (Acc): " + ofToString(knnTrainingAcc.size()), 50, 370);
+    
     ofPushStyle();
     ofSetColor(colorKNN);
     ofDrawRectangle(250, 320, 80,80);
@@ -354,10 +425,13 @@ void MachineLearning::draw() {
     ofDrawBitmapString("KNN", 255, 345);
     ofDrawBitmapString("Class: " + ofToString(knnClassLabelEMG), 255, 365);
     ofPopStyle();
+
     
     //XMM Indicator
     ofSetColor(255);
     ofDrawBitmapString("XMM Training Data: " + ofToString(xmmTempData.trainingSet.size()), 50, 460);
+    
+    
     
     //NN Indicator
     for (int i = 0; i < TOTALSCENES; i++){
@@ -374,7 +448,9 @@ void MachineLearning::onButtonEvent(ofxDatGuiButtonEvent e){
         bRunKNN = false;
         bCaptureKNN = false;
         knnTrainingEMG.clear();
+        knnTrainingAcc.clear();
         knnClassifierEMG.reset();
+        knnClassifierAcc.reset();
     }
     
     if (guiLabel == "Clear XMM"){
@@ -420,6 +496,7 @@ void MachineLearning::onToggleEvent(ofxDatGuiToggleEvent e){
 
 void MachineLearning::onSliderEvent(ofxDatGuiSliderEvent e){
     string guiLabel = e.target->getLabel();
+    if (guiLabel == "Segment Threshold") segmentThreshold = e.target->getValue();
 }
 
 void MachineLearning::onMatrixEvent(ofxDatGuiMatrixEvent e){
@@ -437,7 +514,8 @@ void MachineLearning::onMatrixEvent(ofxDatGuiMatrixEvent e){
     } else if (guiLabel == "Scene"){
         bRunReg = false;
         sceneNum = whichButton;
-
+        oneShotTrigger = true;
+        playSceneTrigger();
         //For GUI Feedback
         for(int i =0; i < TOTALSCENES; i++){
             if ( i == sceneNum){

@@ -14,8 +14,8 @@ DMXController::DMXController(){
     
     washes.push_back(new MH2);
     washes.push_back(new MH2);
-
-//    Setup address of each light
+    
+    // Setup address of each light
     washes[0]->setup(1, &dmx);
     washes[1]->setup(7, &dmx);
     
@@ -26,10 +26,16 @@ DMXController::DMXController(){
 DMXController::~DMXController(){
 }
 
-void DMXController::update(MachineLearning &ml){
+void DMXController::update(float pVal1, float pVal2, ofColor knnClass){
+    pVal1 = ofMap(pVal1, 0 ,1 ,0 ,255);
+    pVal2 = ofMap(pVal2, 0 ,1 ,0 ,255);
+    
+    knnClass.a = pVal2;
+    
     for (auto wash : washes){
-        wash->setColor(ofColor(255));
+        wash->setColor(ofColor(knnClass));
     }
+
     if (dmx.isConnected()) dmx.update(); // Gets next dmx message
 }
 

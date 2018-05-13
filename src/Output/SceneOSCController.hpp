@@ -10,6 +10,10 @@
 #include "ofMain.h"
 #include "ofxOsc.h"
 #include "MachineLearning.hpp"
+#include "DMXController.hpp"
+#include "MyoManager.hpp"
+
+
 
 //#define HOST "172.17.0.189"
 #define HOST "localhost"
@@ -18,7 +22,6 @@
 
 class SceneOSCController {
 private:
-    int scene = 0;
     int track = 0;
     int device = 0;
     int param = 0;
@@ -28,20 +31,25 @@ private:
     
     string paramOut;
     
+    once_flag flag1;
+    
 public:
-    SceneOSCController();
+    SceneOSCController(MachineLearning *_ml, MyoManager *_myo);
     ~SceneOSCController();
     
-    void update(MachineLearning &ml);
+    void update();
     void draw(ofVec2f pos);
+    void callPlayScene();
     void streamToInstrumentDevice(string address, int track, int device, int parameter, float value);
     void returnValFromInstrumentAllDevices(int track, int device);
     
     void returnValFromInstrumentDevice(int track, int device, int parameter);
     
-    void nextScene();
-    void prevScene();
-    void playScene();
-    void stopScene();
+    void playScene(int scene);
+    void stopScene(int scene);
     void keyPressed(int key);
+    
+    MachineLearning * ml;
+    MyoManager * myo;
+    DMXController dmxControl;
 };

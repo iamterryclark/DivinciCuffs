@@ -4,29 +4,29 @@
 void ofApp::setup(){
     ofSetFrameRate(60);
     ofSetVerticalSync(true);
+    
+    myoManager = new MyoManager();
+    interactiveML = new MachineLearning(myoManager);
+    sceneControl = new SceneOSCController(interactiveML, myoManager);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    myoManager.update();
+    myoManager->update();
+    interactiveML->update();
+    sceneControl->update();
     
-    interactiveML.update(myoManager);
-    
-    oscControl.update(interactiveML);
-    dmxControl.update(interactiveML);
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
     ofBackground(0);
     
-    myoManager.draw();
-    
-    oscControl.draw( ofVec2f( 50, ofGetHeight() - 100) );
-    
-    interactiveML.draw();
-    dmxControl.draw();
-
+    myoManager->draw();
+    sceneControl->draw( ofVec2f( 50, ofGetHeight() - 100) );
+    interactiveML->draw();
+   
+    ofSetColor(255);
     ofDrawBitmapString("FrameRate: " + ofToString((int)ofGetFrameRate()), ofGetWidth()-200, ofGetHeight()-10);
 }
 
@@ -37,7 +37,7 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-    oscControl.keyPressed(key);
+    sceneControl->keyPressed(key);
 }
 
 //--------------------------------------------------------------

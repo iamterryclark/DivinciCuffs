@@ -14,15 +14,10 @@ MyoManager::MyoManager()
     //Load GUI
     myoGui = new ofxDatGui( ofxDatGuiAnchor::TOP_RIGHT );
     
-    myoGui->setPosition(ofGetWidth() -(myoGui->getWidth()*2), 0);
+    myoGui->setPosition(ofGetWidth() - (myoGui->getWidth() * 2), 0);
     myoGui->setAssetPath("");
-    
     myoGui->addHeader(" Myo Functions ");
     myoGui->addBreak()->setHeight(10.0f);
-    myoGui->addLabel(" :: Myo Parameters :: ");
-    myoGui->addSlider("Lower Threshold", 0, 100);
-    myoGui->addSlider("Higher Threshold", 0, 10);
-    //    myoGui->addSlider("WindowSize", 1, 60);
     myoGui->addLabel(" :: Bayes Filter Params :: ");
     myoGui->addSlider("Bayes JumpRate", 1, 10);
     myoGui->addSlider("Bayes MVC", 1, 100);
@@ -67,7 +62,7 @@ MyoManager::~MyoManager(){
 //-------------------------------
 
 void MyoManager::update(){
-    for ( int i=0; i<myo.getDevices().size(); i++ ) {
+    for ( int i=0; i< myo.getDevices().size(); i++ ) {
         
         feature[i].identity = myo.getDevices()[i]->getId();
 
@@ -266,11 +261,7 @@ void MyoManager::onButtonEvent(ofxDatGuiButtonEvent e){
 void MyoManager::onSliderEvent(ofxDatGuiSliderEvent e){
     string guiLabel = e.target->getLabel();
     
-    if (guiLabel == "Lower Threshold") {
-        lowerThresh = e.target->getValue();
-    } else if (guiLabel == "Higher Threshold") {
-        higherThresh = e.target->getValue();
-    } else if (guiLabel == "Bayes JumpRate") {
+   if (guiLabel == "Bayes JumpRate") {
         float value = e.target->getValue();
         
         for (int i = 0; i < 8; i++){

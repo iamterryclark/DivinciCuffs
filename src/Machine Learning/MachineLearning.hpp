@@ -15,22 +15,25 @@
 
 //My Classes
 #include "MyoManager.hpp"
-#define TOTALSCENES 9
+
+//Just change this number to total scenes in Ableton, everything will format
+#define TOTALSCENES 10
 
 class MachineLearning {
 private:
     
 public:
-    MachineLearning();
+    MachineLearning(MyoManager *_myo);
     ~MachineLearning();
     
-    void update(MyoManager &myo);
+    void update();
     void draw();
     void addDataToXML(vector<trainingExample> example, string addToName = "");
     void saveDataToXML();
     void loadDataFromXML();
     void dataParseXML(string searchTerm,vector<trainingExample> &trainingVec);
-    bool segmentLimit(vector<double> inputCheck, float threshold);
+    bool segmentLimit(vector<double> inputCheck);
+    bool playSceneTrigger();
 
     //Gui Events
     void onButtonEvent(ofxDatGuiButtonEvent e);
@@ -39,6 +42,9 @@ public:
     void onMatrixEvent(ofxDatGuiMatrixEvent e);
     void onTextInputEvent(ofxDatGuiTextInputEvent e);
     
+    //Myo Instance
+    MyoManager * myo;
+    
     //Gui Params
     ofxDatGui * mlGui;
     string fileName;
@@ -46,20 +52,22 @@ public:
     int lastTagNumber;
     
     //KNN Recognition
-    classification knnClassifierEMG;
-    vector<trainingExample> knnTrainingEMG;
+    classification knnClassifierEMG, knnClassifierAcc;
+    vector<trainingExample> knnTrainingEMG, knnTrainingAcc;
     bool bCaptureKNN, bTrainKNN, bRunKNN;
     int knnClassLabelEMG = 0;
     int knnClassLabelAcc = 0;
     int knnGestureNum = 0;
-    
-    //XMM Recognition
-    rapidmix::xmmTemporalClassification xmmClassifierEMG;
+    float segmentThreshold = 0.0;
+
+//    XMM Recognition
+rapidmix::xmmTemporalClassification xmmClassifierEMG;
     rapidmix::trainingData xmmTempData;
-    bool bCaptureXMM, bTrainXMM, bRunXMM, bStartXMMRecording;
-    int xmmGestureNum;
-    
-    
+    bool bCaptureXMM, bTrainXMM, bRunXMM;
+    bool bStartXMMRecording = false;
+    int xmmGestureNum = 0;
+    vector<vector<double>> xmmPhrase;
+
     //Regression
     vector<regression> nnAllReg;
     vector <vector<trainingExample>> nnAllTrainingSets;
@@ -67,7 +75,6 @@ public:
     bool bCaptureReg, bTrainReg, bRunReg;
     vector<double> regressVals;
     vector<double> outputReg = {0,0,0,0,0,0,0,0,0};
-    
     
     //Output Visualisor for classification type labels
     ofColor colorKNN, colorXMM;
@@ -83,5 +90,9 @@ public:
     
     //Scene Information
     int sceneNum = 0;
-    vector<bool> sceneActivate = vector<bool>(4, false);
+    bool sceneActivate = 0;
+    
+    //For playing the scene
+    bool oneShotTrigger = false;
+
 };
