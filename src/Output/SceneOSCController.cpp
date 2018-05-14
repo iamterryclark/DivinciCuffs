@@ -264,22 +264,18 @@ void SceneOSCController::playScene(int scene){
     cout << "Scene :" << scene << endl;
 }
 
-void SceneOSCController::stopScene(int scene){
+void SceneOSCController::stopScene(){
     ofxOscMessage m;
-    m.setAddress("/live/stop/scene");
-    m.addIntArg(scene);
+    m.setAddress("/live/stop");
     oscSend.sendMessage(m);
     m.clear();
 }
 
+//Hidden Functions to help navigate Ableton Parameters and stop the track from playing for operators use
 //--------------------------------------------------------------
 void SceneOSCController::keyPressed(int key){
     switch(key) {
-//        case 'w': nextScene(); break;
-//        case 'q': prevScene(); break;
-//        case ' ': playScene(); break;
-//        case 's': stopScene(); break;
-        case 's': stopScene(ml->sceneNum); break;
+        case 's': stopScene(); break;
         case 't': track++; break;
         case 'g': track--; break;
         case 'd': device++; break;
@@ -289,6 +285,4 @@ void SceneOSCController::keyPressed(int key){
         case 'k': returnValFromInstrumentDevice(track, device, param); break;
         case 'j': returnValFromInstrumentAllDevices(track, device); break;
     }
-    
-//    cout << "Track:" << track << " Device:" << device <<  " Param:" << param << endl;
 }

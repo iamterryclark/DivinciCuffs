@@ -11,7 +11,6 @@
 #include "ofxDmx.h"
 #include "MH2.hpp"
 
-
 class DMXController{
 public:
     DMXController();

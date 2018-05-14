@@ -7,7 +7,6 @@
 
 #include "DMXController.hpp"
 
-
 DMXController::DMXController(){
     dmx.connect(0, 60); //Serial Port Number
     dmx.update(true); //Resets the lights to 0 position in all channel

@@ -215,7 +215,7 @@ void MyoManager::drawModel(ofVec2f pos, int id){
 }
 
 //-------------------------------
-
+//Draw graph with vector<double> as input
 void MyoManager::drawGraph(ofVec2f pos, string title, vector<double> values, int min, int max){
     ofDrawBitmapString(title, pos.x, pos.y);
     
@@ -226,6 +226,7 @@ void MyoManager::drawGraph(ofVec2f pos, string title, vector<double> values, int
     }
 }
 
+//Draw graph with vector<int> as input
 //-------------------------------
 
 void MyoManager::drawGraph(ofVec2f pos, string title, vector<int> values, int min, int max){
@@ -238,6 +239,7 @@ void MyoManager::drawGraph(ofVec2f pos, string title, vector<int> values, int mi
     }
 }
 
+//Draw graph with vec3 as input
 //-------------------------------
 
 void MyoManager::drawGraph(ofVec2f pos, string title, ofVec3f values, int min, int max){

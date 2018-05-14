@@ -44,7 +44,7 @@ public:
     void returnValFromInstrumentDevice(int track, int device, int parameter);
     
     void playScene(int scene);
-    void stopScene(int scene);
+    void stopScene();
     void keyPressed(int key);
     
     MachineLearning * ml;
