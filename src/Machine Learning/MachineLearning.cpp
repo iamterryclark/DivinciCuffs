@@ -88,7 +88,7 @@ MachineLearning::~MachineLearning() {
     delete mlGui;
 }
 
-void MachineLearning::addDataToXML(vector<trainingExample> examples, string title){
+void MachineLearning::addDataToXML(vector<trainingExample> examples, int nnNum, string title){
 
     lastTagNumber = mlSettings.addTag(title);
 
@@ -104,7 +104,7 @@ void MachineLearning::addDataToXML(vector<trainingExample> examples, string titl
             }
             
             //Seperate Process for Regression outputs
-            if (title == "nnEMG_" + ofToString(sceneNum)){
+            if (title == "nnEMG_" + ofToString(nnNum)){
                 for (int j = 0; j < examples[i].output.size(); j++){
                     mlSettings.addValue("output", (float)examples[i].output[j]);
                 }
@@ -122,18 +122,18 @@ void MachineLearning::saveDataToXML(){
     mlSettings.clear();
     
     if (knnTrainingEMG.size() > 0)
-        addDataToXML(knnTrainingEMG, "knnEMG");
+        addDataToXML(knnTrainingEMG, 0, "knnEMG");
     
     if (knnTrainingAcc.size() > 0)
-        addDataToXML(knnTrainingAcc, "knnAcc");
+        addDataToXML(knnTrainingAcc, 0, "knnAcc");
     
     for (int i = 0; i < TOTALSCENES; i++){
         if (nnAllTrainingSets[i].size() > 0){
-             addDataToXML(nnAllTrainingSets[i], "nnEMG_" + ofToString(i));
+             addDataToXML(nnAllTrainingSets[i], i, "nnEMG_" + ofToString(i));
         }
     }
    
-    mlSettings.save(fileName + ".xml");
+    mlSettings.save("savedGestures/" + fileName + ".xml");
 }
 
 void MachineLearning::loadDataFromXML(){
@@ -143,16 +143,20 @@ void MachineLearning::loadDataFromXML(){
     for (int i = 0; i < TOTALSCENES; i++)
         nnAllTrainingSets[i].clear();
     
-    if( mlSettings.loadFile(fileName + ".xml") ){
-        if (mlSettings.getNumTags("knnEMG") > 0)
-            dataParseXML("knnEMG", knnTrainingEMG);
-
-        if (mlSettings.getNumTags("knnAcc") > 0)
-            dataParseXML("knnAcc", knnTrainingAcc);
+    if( mlSettings.loadFile("savedGestures/" + fileName + ".xml") ){
+        if (mlSettings.getNumTags("knnEMG") > 0){
+            dataParseXML("knnEMG", 0, knnTrainingEMG);
+        }
         
-        for (int i = 0; i < TOTALSCENES; i++)
-            if (mlSettings.getNumTags("nnEMG_" + ofToString(i)) > 0)
-                dataParseXML("nnEMG_" + ofToString(i), nnAllTrainingSets[i]);
+        if (mlSettings.getNumTags("knnAcc") > 0){
+            dataParseXML("knnAcc", 0, knnTrainingAcc);
+        }
+        
+        for (int i = 0; i < TOTALSCENES; i++){
+            if (mlSettings.getNumTags("nnEMG_" + ofToString(i)) > 0){
+                dataParseXML("nnEMG_" + ofToString(i), i, nnAllTrainingSets[i]);
+            }
+        }
 
         
     } else {
@@ -162,11 +166,10 @@ void MachineLearning::loadDataFromXML(){
 
 //Reference: http://openframeworks.cc/documentation/ofxXmlSettings/ofxXmlSettings/
 
-void MachineLearning::dataParseXML(string searchTerm, vector<trainingExample> &trainingVec){
+void MachineLearning::dataParseXML(string searchTerm, int nnNum, vector<trainingExample> &trainingVec){
     mlSettings.pushTag(searchTerm);
     int numExTags = mlSettings.getNumTags("example");
     for(int i = 0; i < numExTags; i++){
-        
         mlSettings.pushTag("example", i);
         
         int inputNum = mlSettings.getNumTags("input");
@@ -177,7 +180,7 @@ void MachineLearning::dataParseXML(string searchTerm, vector<trainingExample> &t
              example.input.push_back(mlSettings.getValue("input", j));
         }
         
-        if (searchTerm == "nnEMG_" + ofToString(sceneNum)){
+        if (searchTerm == "nnEMG_" + ofToString(nnNum)){
             int numOutputs = mlSettings.getNumTags("output");
             
             for (int k = 0; k < numOutputs; k++){

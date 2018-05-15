@@ -28,10 +28,10 @@ public:
     
     void update();
     void draw();
-    void addDataToXML(vector<trainingExample> example, string addToName = "");
+    void addDataToXML(vector<trainingExample> example, int nnNum, string addToName = "");
     void saveDataToXML();
     void loadDataFromXML();
-    void dataParseXML(string searchTerm,vector<trainingExample> &trainingVec);
+    void dataParseXML(string searchTerm, int i, vector<trainingExample> &trainingVec);
     bool segmentLimit(vector<double> inputCheck);
     bool playSceneTrigger();
 
